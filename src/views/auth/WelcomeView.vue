@@ -23,13 +23,13 @@
 
     <!-- Actions -->
     <div class="px-6 pb-12 pt-8 flex flex-col gap-3">
-      <AppButton @click="router.push('/login')">
+      <Button variant="default" class="w-full" @click="router.push('/login')">
         Se connecter
-      </AppButton>
+      </Button>
 
-      <AppButton variant="outline-white" @click="router.push('/register')">
+      <Button variant="outline" class="w-full border-white/50 text-white hover:bg-white/10" @click="router.push('/register')">
         Créer un compte
-      </AppButton>
+      </Button>
 
       <!-- Séparateur -->
       <div class="flex items-center gap-3 my-1">
@@ -48,8 +48,8 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
-import AppButton from '@/components/ui/AppButton.vue'
+import { Button } from '@/components/ui/button'
 const router = useRouter()
 </script>

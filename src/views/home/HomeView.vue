@@ -93,12 +93,12 @@
         </div>
 
         <div class="mt-4">
-          <AppButton @click="doSearch">
+          <Button class="w-full" @click="doSearch">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             Rechercher un trajet
-          </AppButton>
+          </Button>
         </div>
       </div>
     </div>
@@ -164,12 +164,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSearchStore } from '@/stores/search'
 import { useAuthStore }   from '@/stores/auth'
-import AppButton from '@/components/ui/AppButton.vue'
+import { toast } from 'vue-sonner'
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
 const search = useSearchStore()
@@ -221,5 +222,11 @@ function quickSearch(t) {
 
 function doSearch() { router.push('/recherche') }
 
-onMounted(() => search.loadGares())
+onMounted(async () => {
+  try {
+    await search.loadGares()
+  } catch {
+    toast.error('Service temporairement indisponible', { description: 'Vérifiez votre connexion réseau' })
+  }
+})
 </script>
