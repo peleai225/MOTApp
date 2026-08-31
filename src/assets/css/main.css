@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    background-color: #EFF3FF;
+  }
+  body {
+    font-family: "DM Sans", system-ui, sans-serif;
+    color: #1A1A2E;
+    background-color: #EFF3FF;
+    min-height: 100dvh;
+  }
+  * { box-sizing: border-box; }
+  h1, h2, h3 {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+  }
+}
+
+@layer components {
+
+  /* ─── Boutons ─────────────────────────────────────────── */
+  .btn-base {
+    @apply relative overflow-hidden flex items-center justify-center
+           h-[52px] rounded-[12px] font-semibold text-base
+           transition-all duration-150 active:scale-[0.97] w-full;
+    font-family: "DM Sans", system-ui, sans-serif;
+  }
+  .btn-route {
+    @apply btn-base text-white;
+    background-color: #E9550D;
+    box-shadow: 0 4px 16px rgba(233,85,13,0.35);
+  }
+  .btn-route:disabled {
+    @apply bg-slate-300 shadow-none cursor-not-allowed;
+  }
+  .btn-outline {
+    @apply btn-base bg-transparent;
+    border: 1.5px solid #E9550D;
+    color: #E9550D;
+  }
+  .btn-outline-white {
+    @apply btn-base bg-transparent;
+    border: 1.5px solid rgba(255,255,255,0.4);
+    color: white;
+  }
+
+  /* ─── Inputs ──────────────────────────────────────────── */
+  .input-field {
+    @apply w-full h-[52px] rounded-[12px] bg-white border border-slate-200 px-4
+           text-sm placeholder-slate-400 transition-all duration-150;
+    font-family: "DM Sans", system-ui, sans-serif;
+    color: #1A1A2E;
+  }
+  .input-field:focus {
+    @apply outline-none;
+    border-color: #F59E0B;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+  }
+
+  /* ─── Cards ───────────────────────────────────────────── */
+  .card {
+    @apply bg-white p-4 rounded-[16px];
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  /* ─── Ticket physique ─────────────────────────────────── */
+  .ticket-card {
+    @apply rounded-[16px] overflow-visible relative;
+    box-shadow: 0 4px 24px rgba(15,24,41,0.12);
+    margin-left: 4px;
+    margin-right: 4px;
+  }
+  .ticket-header {
+    @apply text-white px-4 py-3;
+    background-color: #0F1829;
+    border-radius: 16px 16px 0 0;
+  }
+  .ticket-body {
+    @apply px-4 py-4;
+    background-color: #FDF6EC;
+    border-radius: 0 0 16px 16px;
+  }
+  .ticket-tear {
+    position: relative;
+    border-top: 2px dashed #E2E8F0;
+    background-color: #FDF6EC;
+  }
+  .ticket-tear::before,
+  .ticket-tear::after {
+    content: '';
+    position: absolute;
+    top: -13px;
+    width: 26px;
+    height: 26px;
+    background-color: #EFF3FF;
+    border-radius: 50%;
+    border: 1px solid #E2E8F0;
+  }
+  .ticket-tear::before { left: -21px; }
+  .ticket-tear::after  { right: -21px; }
+
+  /* ─── Pages ───────────────────────────────────────────── */
+  .page {
+    @apply max-w-[430px] mx-auto min-h-dvh flex flex-col;
+    background-color: #EFF3FF;
+  }
+  .page-white {
+    @apply max-w-[430px] mx-auto min-h-dvh flex flex-col bg-white;
+  }
+  .page-dark {
+    @apply max-w-[430px] mx-auto min-h-dvh flex flex-col;
+    background-color: #0F1829;
+  }
+
+  /* ─── Utilitaires ─────────────────────────────────────── */
+  .section-label {
+    @apply font-semibold uppercase tracking-widest;
+    font-family: "DM Sans", system-ui, sans-serif;
+    font-size: 10px;
+    line-height: 14px;
+    color: #6B7280;
+    margin-bottom: 8px;
+  }
+  .pb-safe { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .pt-safe  { padding-top: max(16px, env(safe-area-inset-top)); }
+
+  /* ─── Skeleton shimmer ────────────────────────────────── */
+  .skeleton {
+    @apply rounded-xl bg-slate-200 relative overflow-hidden;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.65) 50%, transparent 100%);
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+/* ─── Keyframes (hors layer) ──────────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ─── Transitions de vues ─────────────────────────────────── */
+.slide-enter-active,
+.slide-leave-active { transition: transform 0.22s ease, opacity 0.18s ease; }
+.slide-enter-from   { transform: translateX(24px); opacity: 0; }
+.slide-leave-to     { transform: translateX(-24px); opacity: 0; }
+
+.fade-enter-active,
+.fade-leave-active  { transition: opacity 0.18s ease; }
+.fade-enter-from,
+.fade-leave-to      { opacity: 0; }
+
+.sheet-enter-active,
+.sheet-leave-active { transition: all 0.28s cubic-bezier(0.32,0.72,0,1); }
+.sheet-enter-from,
+.sheet-leave-to     { opacity: 0; }
+.sheet-enter-from .sheet-content,
+.sheet-leave-to .sheet-content { transform: translateY(100%); }
+
+/* ─── Réduction de mouvement ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
