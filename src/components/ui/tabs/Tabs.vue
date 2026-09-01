@@ -2,8 +2,9 @@
 import type { TabsRootEmits, TabsRootProps } from "reka-ui"
 import { TabsRoot, useForwardPropsEmits } from "reka-ui"
 
-const props = defineProps<TabsRootProps>()
-const emits = defineEmits<TabsRootEmits>()
+interface Props extends /* @vue-ignore */ TabsRootProps {}
+const props = defineProps<Props>()
+const emits = defineEmits</* @vue-ignore */ TabsRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
 </script>

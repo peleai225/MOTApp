@@ -5,7 +5,10 @@ import { reactiveOmit } from "@vueuse/core"
 import { DialogDescription } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<DialogDescriptionProps & { class?: HTMLAttributes["class"] }>()
+interface Props extends /* @vue-ignore */ DialogDescriptionProps {
+  class?: HTMLAttributes["class"]
+}
+const props = defineProps<Props>()
 
 const delegatedProps = reactiveOmit(props, "class")
 </script>

@@ -6,7 +6,10 @@ import { ChevronDown } from "lucide-vue-next"
 import { SelectIcon, SelectTrigger, useForwardProps } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<SelectTriggerProps & { class?: HTMLAttributes["class"] }>()
+interface Props extends /* @vue-ignore */ SelectTriggerProps {
+  class?: HTMLAttributes["class"]
+}
+const props = defineProps<Props>()
 
 const delegatedProps = reactiveOmit(props, "class")
 

@@ -2,7 +2,8 @@
 import type { AvatarImageProps } from "reka-ui"
 import { AvatarImage } from "reka-ui"
 
-const props = defineProps<AvatarImageProps>()
+interface Props extends /* @vue-ignore */ AvatarImageProps {}
+const props = defineProps<Props>()
 </script>
 
 <template>

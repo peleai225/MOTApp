@@ -11,7 +11,10 @@ import {
 } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<SelectItemProps & { class?: HTMLAttributes["class"] }>()
+interface Props extends /* @vue-ignore */ SelectItemProps {
+  class?: HTMLAttributes["class"]
+}
+const props = defineProps<Props>()
 
 const delegatedProps = reactiveOmit(props, "class")
 

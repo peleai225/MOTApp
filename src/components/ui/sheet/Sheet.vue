@@ -2,8 +2,9 @@
 import type { DialogRootEmits, DialogRootProps } from "reka-ui"
 import { DialogRoot, useForwardPropsEmits } from "reka-ui"
 
-const props = defineProps<DialogRootProps>()
-const emits = defineEmits<DialogRootEmits>()
+interface Props extends /* @vue-ignore */ DialogRootProps {}
+const props = defineProps<Props>()
+const emits = defineEmits</* @vue-ignore */ DialogRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
 </script>

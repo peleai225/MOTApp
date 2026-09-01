@@ -6,7 +6,10 @@ import { ChevronDown } from "lucide-vue-next"
 import { SelectScrollDownButton, useForwardProps } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<SelectScrollDownButtonProps & { class?: HTMLAttributes["class"] }>()
+interface Props extends /* @vue-ignore */ SelectScrollDownButtonProps {
+  class?: HTMLAttributes["class"]
+}
+const props = defineProps<Props>()
 
 const delegatedProps = reactiveOmit(props, "class")
 

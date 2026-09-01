@@ -82,14 +82,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { trajetApi } from '@/api'
 import { useSearchStore } from '@/stores/search'
-import { useToast } from '@/composables/useToast'
+import { toast } from 'vue-sonner'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import { Button } from '@/components/ui/button'
 
 const route  = useRoute()
 const router = useRouter()
 const search = useSearchStore()
-const toast  = useToast()
 
 const loading  = ref(true)
 const config   = ref(null)

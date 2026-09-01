@@ -2,8 +2,9 @@
 import type { SelectRootEmits, SelectRootProps } from "reka-ui"
 import { SelectRoot, useForwardPropsEmits } from "reka-ui"
 
-const props = defineProps<SelectRootProps>()
-const emits = defineEmits<SelectRootEmits>()
+interface Props extends /* @vue-ignore */ SelectRootProps {}
+const props = defineProps<Props>()
+const emits = defineEmits</* @vue-ignore */ SelectRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
 </script>

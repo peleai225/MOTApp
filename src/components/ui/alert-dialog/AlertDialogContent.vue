@@ -10,8 +10,11 @@ import {
 } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<AlertDialogContentProps & { class?: HTMLAttributes["class"] }>()
-const emits = defineEmits<AlertDialogContentEmits>()
+interface Props extends /* @vue-ignore */ AlertDialogContentProps {
+  class?: HTMLAttributes["class"]
+}
+const props = defineProps<Props>()
+const emits = defineEmits</* @vue-ignore */ AlertDialogContentEmits>()
 
 const delegatedProps = reactiveOmit(props, "class")
 

@@ -15,13 +15,16 @@ defineOptions({
   inheritAttrs: false,
 })
 
+interface Props extends /* @vue-ignore */ SelectContentProps {
+  class?: HTMLAttributes["class"]
+}
 const props = withDefaults(
-  defineProps<SelectContentProps & { class?: HTMLAttributes["class"] }>(),
+  defineProps<Props>(),
   {
     position: "popper",
   },
 )
-const emits = defineEmits<SelectContentEmits>()
+const emits = defineEmits</* @vue-ignore */ SelectContentEmits>()
 
 const delegatedProps = reactiveOmit(props, "class")
 

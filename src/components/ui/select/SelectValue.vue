@@ -2,7 +2,8 @@
 import type { SelectValueProps } from "reka-ui"
 import { SelectValue } from "reka-ui"
 
-const props = defineProps<SelectValueProps>()
+interface Props extends /* @vue-ignore */ SelectValueProps {}
+const props = defineProps<Props>()
 </script>
 
 <template>

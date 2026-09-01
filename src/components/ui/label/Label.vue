@@ -5,7 +5,10 @@ import { reactiveOmit } from "@vueuse/core"
 import { Label } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<LabelProps & { class?: HTMLAttributes["class"] }>()
+interface Props extends /* @vue-ignore */ LabelProps {
+  class?: HTMLAttributes["class"]
+}
+const props = defineProps<Props>()
 
 const delegatedProps = reactiveOmit(props, "class")
 </script>

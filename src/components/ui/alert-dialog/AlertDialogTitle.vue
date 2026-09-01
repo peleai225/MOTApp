@@ -5,7 +5,10 @@ import { reactiveOmit } from "@vueuse/core"
 import { AlertDialogTitle } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<AlertDialogTitleProps & { class?: HTMLAttributes["class"] }>()
+interface Props extends /* @vue-ignore */ AlertDialogTitleProps {
+  class?: HTMLAttributes["class"]
+}
+const props = defineProps<Props>()
 
 const delegatedProps = reactiveOmit(props, "class")
 </script>

@@ -2,7 +2,8 @@
 import type { SelectItemTextProps } from "reka-ui"
 import { SelectItemText } from "reka-ui"
 
-const props = defineProps<SelectItemTextProps>()
+interface Props extends /* @vue-ignore */ SelectItemTextProps {}
+const props = defineProps<Props>()
 </script>
 
 <template>
