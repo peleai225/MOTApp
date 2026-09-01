@@ -12,7 +12,7 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   r => r,
   error => {
-    if (error.response?.status === 401) { localStorage.clear(); window.location.href = '/login' }
+    if (error.response?.status === 401) { localStorage.removeItem('mot_token'); localStorage.removeItem('mot_user'); window.location.href = '/login' }
     return Promise.reject(error)
   }
 )

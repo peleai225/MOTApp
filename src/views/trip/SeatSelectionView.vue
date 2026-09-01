@@ -69,7 +69,7 @@
           </span>
           <span class="font-bold text-neutral-900">{{ fmt(total) }}</span>
         </div>
-        <Button :disabled="!canProceed" @click="proceed">
+        <Button class="w-full" :disabled="!canProceed" @click="proceed">
           Passer au paiement →
         </Button>
       </div>

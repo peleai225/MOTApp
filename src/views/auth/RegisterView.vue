@@ -37,7 +37,7 @@
       </p>
 
       <div class="mt-auto">
-        <Button class="w-full" :loading="loading" @click="submit">Créer mon compte</Button>
+        <Button class="w-full" :disabled="loading" @click="submit">Créer mon compte</Button>
       </div>
     </div>
   </div>

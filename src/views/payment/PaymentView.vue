@@ -56,7 +56,7 @@
 
     <!-- CTA fixe -->
     <div class="px-5 py-4 bg-white border-t border-slate-100">
-      <Button :loading="loading" @click="confirm">Confirmer la réservation</Button>
+      <Button class="w-full" :disabled="loading" @click="confirm">Confirmer la réservation</Button>
     </div>
 
     <!-- Overlay chargement -->

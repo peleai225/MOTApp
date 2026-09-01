@@ -38,7 +38,7 @@
 
     <!-- CTA fixe en bas -->
     <div class="px-6 pb-10 pt-4 flex flex-col gap-4 border-t border-slate-100">
-      <Button class="w-full" :loading="loading" @click="submit">Se connecter</Button>
+      <Button class="w-full" :disabled="loading" @click="submit">Se connecter</Button>
       <p class="text-center font-sans text-sm text-pierre">
         Pas de compte ?
         <router-link to="/register" class="text-route font-semibold"> Créer un compte</router-link>

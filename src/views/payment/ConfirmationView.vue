@@ -46,7 +46,7 @@
 
       <!-- Actions -->
       <div class="w-full flex flex-col gap-3 mt-6">
-        <Button variant="secondary" @click="router.push(`/billet/${reservation.reference}`)">
+        <Button class="w-full" variant="secondary" @click="router.push(`/billet/${reservation.reference}`)">
           📋 Voir mon billet
         </Button>
         <button class="text-slate-500 text-sm font-medium" @click="router.push('/')">

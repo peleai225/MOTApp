@@ -78,7 +78,7 @@
 
     <!-- CTA fixe -->
     <div class="px-5 py-4 bg-white border-t border-slate-100">
-      <Button @click="router.push(`/trajet/${route.params.id}/sieges`)">
+      <Button class="w-full" @click="router.push(`/trajet/${route.params.id}/sieges`)">
         Choisir mes sièges →
       </Button>
     </div>
