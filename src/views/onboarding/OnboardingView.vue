@@ -60,28 +60,28 @@
 
       <!-- CTA -->
       <div class="w-full max-w-xs">
-        <AppButton v-if="current < slides.length - 1" @click="next">
+        <Button v-if="current < slides.length - 1" @click="next">
           Suivant
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
           </svg>
-        </AppButton>
-        <AppButton v-else variant="outline-white" @click="finish">
+        </Button>
+        <Button v-else variant="outline" @click="finish">
           Commencer
-        </AppButton>
+        </Button>
       </div>
     </div>
 
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import AppButton from '@/components/ui/AppButton.vue'
+import { Button } from '@/components/ui/button'
 
 const router  = useRouter()
-const current = ref(0)
+const current = ref<number>(0)
 const dir     = ref('slide')
 
 const slides = [

@@ -17,12 +17,9 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
+
+const props = withDefaults(defineProps<{ title: string; subtitle?: string; back?: boolean }>(), { back: true })
 const router = useRouter()
-defineProps({
-  title:    { type: String, required: true },
-  subtitle: String,
-  back:     { type: Boolean, default: true },
-})
 </script>

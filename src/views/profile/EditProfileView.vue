@@ -13,43 +13,43 @@
       <AppInput v-model="form.adresse"        label="Adresse"          placeholder="Cocody, Rue des Jardins" />
 
       <div class="mt-auto">
-        <AppButton :loading="loading" @click="save">Enregistrer</AppButton>
+        <Button :disabled="loading" @click="save">Enregistrer</Button>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { authApi } from '@/api'
-import { useToast } from '@/composables/useToast'
+import { toast } from 'vue-sonner'
+import { Button } from '@/components/ui/button'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import AppInput   from '@/components/ui/AppInput.vue'
-import AppButton  from '@/components/ui/AppButton.vue'
+import type { User } from '@/types'
 
 const router  = useRouter()
 const auth    = useAuthStore()
-const toast   = useToast()
 const loading = ref(false)
 
-const form = reactive({ nom: '', prenom: '', email: '', date_naissance: '', ville: '', adresse: '' })
+const form = ref<Partial<User>>({ nom: '', prenom: '', email: '', date_naissance: '', ville: '', adresse: '' })
 const err  = reactive({ nom: '', prenom: '' })
 
 onMounted(() => {
   const u = auth.user
-  if (u) Object.assign(form, { nom: u.nom, prenom: u.prenom, email: u.email || '', ville: u.ville || '' })
+  if (u) Object.assign(form.value, { nom: u.nom, prenom: u.prenom, email: u.email || '', ville: u.ville || '' })
 })
 
 async function save() {
   loading.value = true
   try {
-    await authApi.update(form)
+    await authApi.update(form.value)
     await auth.fetchMe()
     toast.success('Profil mis à jour !')
     router.back()
-  } catch (e) {
+  } catch (e: any) {
     const errs = e.response?.data?.errors || {}
     if (errs.nom)    err.nom    = errs.nom[0]
     if (errs.prenom) err.prenom = errs.prenom[0]
