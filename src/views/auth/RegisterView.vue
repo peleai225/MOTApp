@@ -14,7 +14,7 @@
       <AppInput v-model="form.email"     label="Email" type="email" placeholder="mamadou@email.com" prefix="✉" />
 
       <div class="mt-auto">
-        <AppButton @click="nextStep">Continuer →</AppButton>
+        <Button class="w-full" @click="nextStep">Continuer →</Button>
       </div>
     </div>
 
@@ -37,25 +37,24 @@
       </p>
 
       <div class="mt-auto">
-        <AppButton :loading="loading" @click="submit">Créer mon compte</AppButton>
+        <Button class="w-full" :disabled="loading" @click="submit">Créer mon compte</Button>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useToast } from '@/composables/useToast'
+import { toast } from 'vue-sonner'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import AppInput   from '@/components/ui/AppInput.vue'
-import AppButton  from '@/components/ui/AppButton.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import { Button } from '@/components/ui/button'
 
 const router  = useRouter()
 const auth    = useAuthStore()
-const toast   = useToast()
-const step    = ref(1)
+const step    = ref<1 | 2>(1)
 const loading = ref(false)
 
 const form = reactive({ nom: '', prenom: '', telephone: '', email: '', password: '', password_confirmation: '' })

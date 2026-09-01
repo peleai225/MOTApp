@@ -69,31 +69,30 @@
           </span>
           <span class="font-bold text-neutral-900">{{ fmt(total) }}</span>
         </div>
-        <AppButton :disabled="!canProceed" @click="proceed">
+        <Button class="w-full" :disabled="!canProceed" @click="proceed">
           Passer au paiement →
-        </AppButton>
+        </Button>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { trajetApi } from '@/api'
 import { useSearchStore } from '@/stores/search'
-import { useToast } from '@/composables/useToast'
+import { toast } from 'vue-sonner'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import AppButton  from '@/components/ui/AppButton.vue'
+import { Button } from '@/components/ui/button'
 
 const route  = useRoute()
 const router = useRouter()
 const search = useSearchStore()
-const toast  = useToast()
 
 const loading  = ref(true)
 const config   = ref(null)
-const selected = ref([])
+const selected = ref<string[]>([])
 
 const rangees = computed(() => config.value?.rangees || [])
 

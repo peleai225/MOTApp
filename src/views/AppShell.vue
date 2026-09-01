@@ -9,6 +9,6 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import TabBar from '@/components/layout/TabBar.vue'
 </script>

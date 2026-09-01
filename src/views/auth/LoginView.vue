@@ -38,7 +38,7 @@
 
     <!-- CTA fixe en bas -->
     <div class="px-6 pb-10 pt-4 flex flex-col gap-4 border-t border-slate-100">
-      <AppButton :loading="loading" @click="submit">Se connecter</AppButton>
+      <Button class="w-full" :disabled="loading" @click="submit">Se connecter</Button>
       <p class="text-center font-sans text-sm text-pierre">
         Pas de compte ?
         <router-link to="/register" class="text-route font-semibold"> Créer un compte</router-link>
@@ -47,20 +47,19 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useToast }     from '@/composables/useToast'
-import AppInput   from '@/components/ui/AppInput.vue'
-import AppButton  from '@/components/ui/AppButton.vue'
+import { toast } from 'vue-sonner'
+import AppInput from '@/components/ui/AppInput.vue'
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
 const route  = useRoute()
 const auth   = useAuthStore()
-const toast  = useToast()
 
-const loading = ref(false)
+const loading = ref<boolean>(false)
 const form    = reactive({ telephone: '', password: '' })
 const errors  = reactive({ telephone: '', password: '' })
 

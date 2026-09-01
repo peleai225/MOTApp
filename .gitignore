@@ -3,3 +3,6 @@ dist/
 .env
 .env.local
 *.local
+AppData/
+*.log
+*.timestamp-*.mjs
