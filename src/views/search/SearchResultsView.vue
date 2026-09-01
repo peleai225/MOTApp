@@ -20,7 +20,7 @@
 
       <!-- Skeleton -->
       <div v-if="search.loading" class="flex flex-col gap-4">
-        <div v-for="i in 3" :key="i" class="skeleton h-[110px]" />
+        <Skeleton v-for="i in 3" :key="i" class="h-[110px]" />
       </div>
 
       <!-- Erreur -->
@@ -30,7 +30,7 @@
         </svg>
         <p class="font-display text-base font-semibold text-encre">Impossible de charger les trajets</p>
         <p class="font-sans text-sm text-pierre">Vérifie ta connexion et réessaie.</p>
-        <AppButton class="max-w-[200px]" @click="search.search()">Réessayer</AppButton>
+        <Button class="max-w-[200px]" @click="search.search()">Réessayer</Button>
       </div>
 
       <!-- Vide -->
@@ -40,7 +40,7 @@
         </svg>
         <p class="font-display text-base font-semibold text-encre">Aucun bus disponible</p>
         <p class="font-sans text-sm text-pierre">Essaie une autre date ou une autre destination.</p>
-        <AppButton variant="outline" class="max-w-[220px]" @click="router.back()">Modifier la recherche</AppButton>
+        <Button variant="outline" class="max-w-[220px]" @click="router.back()">Modifier la recherche</Button>
       </div>
 
       <!-- Résultats -->
@@ -113,16 +113,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSearchStore } from '@/stores/search'
-import AppButton from '@/components/ui/AppButton.vue'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import type { Trajet } from '@/types'
 
 const router = useRouter()
 const search = useSearchStore()
 
-const sorted = computed(() => [...search.results].sort((a, b) => a.heure_depart.localeCompare(b.heure_depart)))
+const sorted = computed<Trajet[]>(() => [...search.results].sort((a, b) => a.heure_depart.localeCompare(b.heure_depart)))
 
 function gareName(id) { return search.gares.find(g => g.id === id)?.nom || '?' }
 function formatDate(d) {

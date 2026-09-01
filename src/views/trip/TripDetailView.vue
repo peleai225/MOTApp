@@ -7,12 +7,12 @@
     </PageHeader>
 
     <div v-if="loading" class="flex-1 px-5 py-6 flex flex-col gap-4">
-      <div class="skeleton h-28" />
-      <div class="skeleton h-40" />
-      <div class="skeleton h-32" />
+      <Skeleton class="h-28" />
+      <Skeleton class="h-40" />
+      <Skeleton class="h-32" />
     </div>
 
-    <div v-else-if="trip" class="flex-1 px-5 py-5 flex flex-col gap-5">
+    <div v-else-if="trip" class="flex-1 px-5 py-5 flex flex-col gap-4">
       <!-- Timeline -->
       <div class="card">
         <div class="flex items-center justify-between">
@@ -35,6 +35,8 @@
         </div>
       </div>
 
+      <Separator />
+
       <!-- Infos -->
       <div class="card">
         <p class="section-title">Infos trajet</p>
@@ -46,15 +48,21 @@
         </div>
       </div>
 
+      <Separator />
+
       <!-- Tarifs -->
-      <div class="card">
-        <p class="section-title">Tarifs</p>
-        <div class="flex flex-col gap-2 text-sm">
-          <div class="flex justify-between"><span class="text-slate-500">Adulte</span><span class="font-semibold">{{ fmt(trip.prix_adulte) }}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Enfant</span><span class="font-semibold">{{ fmt(trip.prix_enfant) }}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Étudiant</span><span class="font-semibold">{{ fmt(trip.prix_etudiant) }}</span></div>
-        </div>
-      </div>
+      <Card>
+        <CardContent class="pt-5">
+          <p class="section-title">Tarifs</p>
+          <div class="flex flex-col gap-2 text-sm">
+            <div class="flex justify-between"><span class="text-slate-500">Adulte</span><span class="font-semibold">{{ fmt(trip.prix_adulte) }}</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Enfant</span><span class="font-semibold">{{ fmt(trip.prix_enfant) }}</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Étudiant</span><span class="font-semibold">{{ fmt(trip.prix_etudiant) }}</span></div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator v-if="trip.arrets?.length" />
 
       <!-- Arrêts -->
       <div v-if="trip.arrets?.length" class="card">
@@ -70,23 +78,27 @@
 
     <!-- CTA fixe -->
     <div class="px-5 py-4 bg-white border-t border-slate-100">
-      <AppButton @click="router.push(`/trajet/${route.params.id}/sieges`)">
+      <Button @click="router.push(`/trajet/${route.params.id}/sieges`)">
         Choisir mes sièges →
-      </AppButton>
+      </Button>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, defineComponent, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { trajetApi } from '@/api'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import AppButton  from '@/components/ui/AppButton.vue'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Separator } from '@/components/ui/separator'
+import { Card, CardContent } from '@/components/ui/card'
+import type { Trajet } from '@/types'
 
 const route  = useRoute()
 const router = useRouter()
-const trip   = ref(null)
+const trip   = ref<Trajet | null>(null)
 const loading = ref(true)
 
 const InfoRow = defineComponent({

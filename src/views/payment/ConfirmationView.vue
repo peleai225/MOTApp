@@ -46,9 +46,9 @@
 
       <!-- Actions -->
       <div class="w-full flex flex-col gap-3 mt-6">
-        <AppButton variant="secondary" @click="router.push(`/billet/${reservation.reference}`)">
+        <Button variant="secondary" @click="router.push(`/billet/${reservation.reference}`)">
           📋 Voir mon billet
-        </AppButton>
+        </Button>
         <button class="text-slate-500 text-sm font-medium" @click="router.push('/')">
           Retour à l'accueil
         </button>
@@ -57,20 +57,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { reservationApi } from '@/api'
 import { useAuthStore }   from '@/stores/auth'
 import QrcodeVue from 'qrcode.vue'
-import AppButton from '@/components/ui/AppButton.vue'
+import { Button } from '@/components/ui/button'
+import type { Reservation } from '@/types'
 
 const route  = useRoute()
 const router = useRouter()
 const auth   = useAuthStore()
 
 const loading     = ref(true)
-const reservation = ref(null)
+const reservation = ref<Reservation | null>(null)
 
 function fmt(p) { return new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' }
 

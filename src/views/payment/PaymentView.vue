@@ -56,7 +56,7 @@
 
     <!-- CTA fixe -->
     <div class="px-5 py-4 bg-white border-t border-slate-100">
-      <AppButton :loading="loading" @click="confirm">Confirmer la réservation</AppButton>
+      <Button :loading="loading" @click="confirm">Confirmer la réservation</Button>
     </div>
 
     <!-- Overlay chargement -->
@@ -71,25 +71,24 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSearchStore } from '@/stores/search'
 import { useAuthStore }   from '@/stores/auth'
 import { reservationApi } from '@/api'
-import { useToast } from '@/composables/useToast'
+import { toast } from 'vue-sonner'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import AppButton  from '@/components/ui/AppButton.vue'
+import { Button } from '@/components/ui/button'
 import AppInput   from '@/components/ui/AppInput.vue'
 
 const route  = useRoute()
 const router = useRouter()
 const search = useSearchStore()
 const auth   = useAuthStore()
-const toast  = useToast()
 
 const loading     = ref(false)
-const mode        = ref('mobile_money')
+const mode        = ref<'mobile_money' | 'especes' | 'carte'>('mobile_money')
 const nomPassager = ref('')
 
 const departId = route.query.depart
