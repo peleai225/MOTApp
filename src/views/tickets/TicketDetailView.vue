@@ -27,7 +27,11 @@
 
       <!-- Badge statut centré -->
       <div class="flex justify-center py-4">
-        <AppBadge :status="ticket.statut" />
+        <Badge
+          :variant="ticket.statut === 'valide' ? 'default' : ticket.statut === 'annule' ? 'destructive' : 'secondary'"
+        >
+          {{ { valide: 'Valide', utilise: 'Utilisé', annule: 'Annulé', expire: 'Expiré' }[ticket.statut] }}
+        </Badge>
       </div>
 
       <!-- Carte ticket physique -->
@@ -81,9 +85,13 @@
           <!-- Détails -->
           <div class="w-full flex flex-col gap-2.5 pt-2 border-t border-slate-200/60">
             <InfoRow label="Date" :value="ticket.trajet?.date_depart" />
+            <Separator class="my-0.5" />
             <InfoRow label="Départ" :value="ticket.trajet?.heure" />
+            <Separator v-if="ticket.sieges?.length" class="my-0.5" />
             <InfoRow v-if="ticket.sieges?.length" label="Siège(s)" :value="ticket.sieges.join(', ')" />
+            <Separator v-if="ticket.bus" class="my-0.5" />
             <InfoRow v-if="ticket.bus" label="Bus" :value="ticket.bus.numero" />
+            <Separator class="my-0.5" />
             <InfoRow label="Paiement" :value="modeLabel(ticket.mode_paiement)" />
             <div class="flex justify-between items-center pt-2 border-t border-slate-200/60">
               <span class="font-mono text-2xs text-pierre tracking-widest uppercase">Montant</span>
@@ -95,77 +103,93 @@
 
       <!-- Annulation -->
       <div v-if="canCancel" class="px-4 mt-5 pb-4">
-        <AppButton variant="outline" @click="showCancel = true">
+        <Button variant="outline" class="w-full" @click="showCancelDialog = true">
           Annuler la réservation
-        </AppButton>
+        </Button>
       </div>
     </div>
 
-    <!-- Modal annulation -->
-    <transition name="fade">
-      <div v-if="showCancel" class="fixed inset-0 bg-black/60 z-50 flex items-end max-w-[430px] mx-auto">
-        <div class="bg-white w-full rounded-t-3xl px-6 pt-6 pb-10 flex flex-col gap-4">
-          <div class="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-2" />
-          <div class="text-center mb-2">
-            <p class="font-display text-xl font-bold text-encre">Annuler ce billet ?</p>
-            <p class="font-sans text-sm text-pierre mt-2 leading-relaxed">
-              Ta place sera libérée et la réservation sera définitivement annulée.
-            </p>
-          </div>
-          <AppButton variant="danger" :loading="cancelling" @click="cancelTicket">Confirmer l'annulation</AppButton>
-          <AppButton variant="secondary" @click="showCancel = false">Garder mon billet</AppButton>
-        </div>
-      </div>
-    </transition>
+    <!-- AlertDialog annulation -->
+    <AlertDialog v-model:open="showCancelDialog">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Annuler ce billet ?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Cette action est irréversible. Le montant ne sera pas remboursé automatiquement.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Retour</AlertDialogCancel>
+          <AlertDialogAction
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            :disabled="cancelling"
+            @click="confirmCancel"
+          >
+            Confirmer l'annulation
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, defineComponent, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { reservationApi } from '@/api'
-import { useToast } from '@/composables/useToast'
+import { toast } from 'vue-sonner'
 import QrcodeVue from 'qrcode.vue'
-import AppBadge  from '@/components/ui/AppBadge.vue'
-import AppButton from '@/components/ui/AppButton.vue'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
+import type { Reservation } from '@/types'
 
 const route      = useRoute()
 const router     = useRouter()
-const toast      = useToast()
 const loading    = ref(true)
 const cancelling = ref(false)
-const showCancel = ref(false)
-const ticket     = ref(null)
+const showCancelDialog = ref(false)
+const ticket     = ref<Reservation | null>(null)
 
 const InfoRow = defineComponent({
   props: { label: String, value: String },
-  setup: p => () => h('div', { class: 'flex justify-between items-center' }, [
+  setup: (p: any) => () => h('div', { class: 'flex justify-between items-center' }, [
     h('span', { class: 'font-mono text-2xs text-pierre tracking-widest uppercase' }, p.label),
     h('span', { class: 'font-sans text-sm font-medium text-encre' }, p.value || '—'),
   ])
 })
 
 const canCancel = computed(() =>
-  ticket.value?.statut === 'valide' &&
-  (ticket.value?.trajet?.date_depart || '') >= new Date().toISOString().slice(0, 10)
+  (ticket.value as any)?.statut === 'valide' &&
+  ((ticket.value as any)?.trajet?.date_depart || '') >= new Date().toISOString().slice(0, 10)
 )
 
-function fmt(p) { return new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' }
-function modeLabel(m) {
-  return { mobile_money: 'Mobile Money', cash: 'Espèces en gare', carte_bancaire: 'Carte bancaire' }[m] || m
+function fmt(p: any) { return new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' }
+function modeLabel(m: any) {
+  return { mobile_money: 'Mobile Money', cash: 'Espèces en gare', carte_bancaire: 'Carte bancaire' }[m as string] || m
 }
 function copyRef() {
-  navigator.clipboard?.writeText(ticket.value.reference)
+  navigator.clipboard?.writeText((ticket.value as any).reference)
   toast.success('Référence copiée !')
 }
-async function cancelTicket() {
+async function confirmCancel() {
   cancelling.value = true
   try {
     await reservationApi.cancel(route.params.ref)
-    ticket.value.statut = 'annule'
-    showCancel.value = false
+    ;(ticket.value as any).statut = 'annule'
+    showCancelDialog.value = false
     toast.success('Réservation annulée.')
-  } catch (e) {
+  } catch (e: any) {
     toast.error(e.response?.data?.message || 'Impossible d\'annuler.')
   } finally {
     cancelling.value = false
