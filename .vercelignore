@@ -1,0 +1,5 @@
+# Inutile pour le site web : projet Android natif et sources des visuels de l'app
+android/
+assets/
+docs/
+.superpowers/
