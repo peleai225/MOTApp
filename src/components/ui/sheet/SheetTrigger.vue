@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { DialogTriggerProps } from "reka-ui"
 import { DialogTrigger } from "reka-ui"
 

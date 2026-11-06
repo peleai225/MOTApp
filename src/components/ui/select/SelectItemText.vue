@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { SelectItemTextProps } from "reka-ui"
 import { SelectItemText } from "reka-ui"
 

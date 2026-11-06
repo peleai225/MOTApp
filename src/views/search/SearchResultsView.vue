@@ -1,139 +1,166 @@
+﻿<script setup lang="ts">
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ArrowRight, BusFront, CloudOff, SlidersHorizontal } from 'lucide-vue-next'
+import AppBar from '@/components/layout/AppBar.vue'
+import DayStrip from '@/components/ui/DayStrip.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import TripCard from '@/components/mot/TripCard.vue'
+import { useSearchStore } from '@/stores/search'
+import { useBookingStore } from '@/stores/booking'
+import { errorMessage, trajetApi } from '@/api'
+import { addDays, dayLabel, isoDate, PERIOD_LABEL, period, plural, type Period } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
+import type { Trajet } from '@/types'
+
+defineOptions({ name: 'SearchResultsView' })
+
+const route = useRoute()
+const router = useRouter()
+const search = useSearchStore()
+const booking = useBookingStore()
+
+const q = computed(() => ({
+  de: Number(route.query.de) || null,
+  a: Number(route.query.a) || null,
+  date: (route.query.date as string) || isoDate(),
+  places: Math.min(10, Math.max(1, Number(route.query.places) || 1)),
+}))
+
+const from = computed(() => search.gareById(q.value.de))
+const to = computed(() => search.gareById(q.value.a))
+
+const trips = ref<Trajet[]>([])
+const state = ref<'loading' | 'ready' | 'error'>('loading')
+const error = ref('')
+const filter = ref<Period | 'all'>('all')
+const scrolled = ref(false)
+let lastKey = ''
+
+async function load(force = false) {
+  if (route.name !== 'search') return
+  const key = JSON.stringify(q.value)
+  if (!force && key === lastKey && state.value === 'ready') return
+  lastKey = key
+  state.value = 'loading'
+  filter.value = 'all'
+  try {
+    const { data } = await trajetApi.rechercher({ origine: q.value.de, destination: q.value.a, date: q.value.date, places: q.value.places })
+    trips.value = (data.trajets || []).slice().sort((a, b) => a.heure_depart.localeCompare(b.heure_depart))
+    state.value = 'ready'
+  } catch (e) {
+    error.value = errorMessage(e)
+    state.value = 'error'
+  }
+}
+
+const date = computed({
+  get: () => q.value.date,
+  set: v => {
+    search.date = v
+    router.replace({ query: { ...route.query, date: v } })
+  },
+})
+
+watch(() => route.query, () => load(), { deep: true })
+onMounted(() => { search.loadGares().catch(() => {}); load() })
+onActivated(() => load())
+
+const periods = computed(() => {
+  const counts: Partial<Record<Period, number>> = {}
+  for (const t of trips.value) { const p = period(t.heure_depart); counts[p] = (counts[p] || 0) + 1 }
+  return (['matin', 'apres-midi', 'soir'] as Period[]).filter(p => counts[p]).map(p => ({ key: p, label: PERIOD_LABEL[p], count: counts[p]! }))
+})
+const shown = computed(() => filter.value === 'all' ? trips.value : trips.value.filter(t => period(t.heure_depart) === filter.value))
+
+function pickFilter(f: Period | 'all') { haptic.select(); filter.value = f }
+
+function choose(t: Trajet) {
+  booking.start(t, q.value.places)
+  router.push({ name: 'trip', params: { id: t.id } })
+}
+
+function nextDay() { date.value = addDays(q.value.date, 1) }
+
+const when = computed(() => {
+  const t = isoDate()
+  if (q.value.date === t) return 'aujourd’hui'
+  if (q.value.date === addDays(t, 1)) return 'demain'
+  return `le ${dayLabel(q.value.date)}`
+})
+</script>
+
 <template>
-  <div class="page flex flex-col">
-    <!-- Header Nuit -->
-    <div class="bg-nuit px-5 pt-safe pb-5">
-      <button @click="router.back()" class="mt-4 mb-4 w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 text-white">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h1 class="font-display text-xl font-bold text-white leading-tight">
-        {{ gareName(search.params.origine) }} → {{ gareName(search.params.destination) }}
-      </h1>
-      <p class="font-sans text-xs text-white/50 mt-1">
-        {{ formatDate(search.params.date) }} · {{ search.params.places }} voyageur{{ search.params.places > 1 ? 's' : '' }}
-      </p>
-    </div>
-
-    <!-- Liste -->
-    <div class="flex-1 px-4 py-5 overflow-y-auto pb-28">
-
-      <!-- Skeleton -->
-      <div v-if="search.loading" class="flex flex-col gap-4">
-        <Skeleton v-for="i in 3" :key="i" class="h-[110px]" />
+  <div class="view">
+    <AppBar :elevated="scrolled" back-to="/">
+      <template #title>
+        <p class="flex items-center gap-1.5 font-display text-[20px] font-semibold leading-6">
+          <span class="truncate">{{ from?.nom || 'Départ' }}</span>
+          <ArrowRight class="h-4 w-4 shrink-0 text-gravier" :stroke-width="2.4" />
+          <span class="truncate">{{ to?.nom || 'Arrivée' }}</span>
+        </p>
+        <p class="truncate text-[13px] leading-4 text-asphalte">{{ dayLabel(q.date) }}, {{ plural(q.places, 'voyageur') }}</p>
+      </template>
+      <template #right>
+        <button type="button" class="btn-ghost btn-sm px-3" @click="router.back()">Modifier</button>
+      </template>
+      <div class="bg-surface px-5 pb-3 pt-1">
+        <DayStrip v-model="date" dense />
       </div>
+    </AppBar>
 
-      <!-- Erreur -->
-      <div v-else-if="search.error" class="flex flex-col items-center py-20 gap-4 text-center">
-        <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
-        </svg>
-        <p class="font-display text-base font-semibold text-encre">Impossible de charger les trajets</p>
-        <p class="font-sans text-sm text-pierre">Vérifie ta connexion et réessaie.</p>
-        <Button class="max-w-[200px]" @click="search.search()">Réessayer</Button>
-      </div>
-
-      <!-- Vide -->
-      <div v-else-if="!search.results.length" class="flex flex-col items-center py-20 gap-4 text-center">
-        <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-        </svg>
-        <p class="font-display text-base font-semibold text-encre">Aucun bus disponible</p>
-        <p class="font-sans text-sm text-pierre">Essaie une autre date ou une autre destination.</p>
-        <Button variant="outline" class="max-w-[220px]" @click="router.back()">Modifier la recherche</Button>
-      </div>
-
-      <!-- Résultats -->
-      <div v-else class="flex flex-col gap-3">
-        <div
-          v-for="t in sorted"
-          :key="t.id"
-          class="bg-white rounded-card shadow-card overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
-          @click="router.push(`/trajet/${t.id}`)"
-        >
-          <!-- Bandeau urgence places -->
-          <div
-            v-if="t.places_disponibles <= 5"
-            class="bg-braise px-4 py-1.5 flex items-center gap-2"
-          >
-            <svg class="w-3.5 h-3.5 text-yellow-700 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <span class="font-sans text-2xs font-semibold text-yellow-800 uppercase tracking-wide">
-              Plus que {{ t.places_disponibles }} place{{ t.places_disponibles > 1 ? 's' : '' }}
-            </span>
-          </div>
-
-          <div class="p-4">
-            <!-- Horaires -->
-            <div class="flex items-center gap-3">
-              <div class="text-center w-14">
-                <p class="font-display text-xl font-bold text-encre leading-none">{{ t.heure_depart }}</p>
-                <p class="font-sans text-2xs text-pierre mt-1 truncate">{{ t.origine.nom?.split(' - ')[0] }}</p>
-              </div>
-
-              <div class="flex-1 flex flex-col items-center gap-1">
-                <p class="font-mono text-2xs text-pierre">
-                  {{ t.duree_minutes ? Math.floor(t.duree_minutes/60)+'h'+('0'+t.duree_minutes%60).slice(-2) : '' }}
-                </p>
-                <div class="flex items-center w-full gap-1">
-                  <div class="w-1.5 h-1.5 rounded-full border-2 border-pierre" />
-                  <div class="flex-1 border-t border-dashed border-slate-200" />
-                  <svg class="w-3 h-3 text-route" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M13.025 1l-2.847 2.828 6.176 6.176h-16.354v3.992h16.354l-6.176 6.176 2.847 2.828 10.975-11z"/>
-                  </svg>
-                  <div class="flex-1 border-t border-dashed border-slate-200" />
-                  <div class="w-1.5 h-1.5 rounded-full bg-route" />
-                </div>
-              </div>
-
-              <div class="text-center w-14">
-                <p class="font-display text-xl font-bold text-encre leading-none">{{ t.heure_arrivee || '—' }}</p>
-                <p class="font-sans text-2xs text-pierre mt-1 truncate">{{ t.destination.nom?.split(' - ')[0] }}</p>
-              </div>
-            </div>
-
-            <!-- Bas de card -->
-            <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
-              <span class="font-sans text-xs text-pierre flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full" :class="t.places_disponibles > 5 ? 'bg-green-500' : 'bg-yellow-500'" />
-                {{ t.places_disponibles }} places
-              </span>
-              <div class="flex items-center gap-1">
-                <span class="font-display text-lg font-bold text-encre">{{ fmt(t.prix_adulte) }}</span>
-                <svg class="w-4 h-4 text-route" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                </svg>
-              </div>
-            </div>
-          </div>
+    <div class="view-scroll pb-10" @scroll.passive="scrolled = ($event.target as HTMLElement).scrollTop > 4">
+      <!-- Chargement -->
+      <div v-if="state === 'loading'" class="space-y-3 px-4 pt-4">
+        <div v-for="i in 4" :key="i" class="rounded-[24px] bg-surface p-4 shadow-lift">
+          <div class="flex items-center justify-between"><div class="skeleton h-8 w-20" /><div class="skeleton h-2 w-24" /><div class="skeleton h-8 w-20" /></div>
+          <div class="mt-5 flex justify-between"><div class="skeleton h-4 w-28" /><div class="skeleton h-6 w-24" /></div>
         </div>
       </div>
+
+      <EmptyState v-else-if="state === 'error'" :icon="CloudOff" tone="error" title="Recherche impossible" :text="error">
+        <button type="button" class="btn-primary" @click="load(true)">Réessayer</button>
+      </EmptyState>
+
+      <EmptyState
+        v-else-if="!trips.length"
+        :icon="BusFront"
+        title="Aucun car ce jour-là"
+        :text="`Pas de départ disponible ${when} pour ${plural(q.places, 'voyageur')} sur ce trajet.`"
+      >
+        <button type="button" class="btn-primary" @click="nextDay">Voir le jour suivant</button>
+        <button type="button" class="btn-ghost" @click="router.back()">Modifier la recherche</button>
+      </EmptyState>
+
+      <template v-else>
+        <div class="flex items-center gap-2 px-5 pb-1 pt-4">
+          <p class="flex-1 text-[14px] text-asphalte">{{ plural(trips.length, 'départ') }}, prix par adulte</p>
+          <SlidersHorizontal v-if="periods.length > 1" class="h-4 w-4 text-gravier" />
+        </div>
+        <div v-if="periods.length > 1" class="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-1 pt-2">
+          <button
+            type="button"
+            class="tap h-9 shrink-0 rounded-full px-4 text-[14px] font-semibold"
+            :class="filter === 'all' ? 'bg-encre text-surface' : 'bg-surface text-encre shadow-field'"
+            @click="pickFilter('all')"
+          >Tous</button>
+          <button
+            v-for="p in periods"
+            :key="p.key"
+            type="button"
+            class="tap h-9 shrink-0 rounded-full px-4 text-[14px] font-semibold"
+            :class="filter === p.key ? 'bg-encre text-surface' : 'bg-surface text-encre shadow-field'"
+            @click="pickFilter(p.key)"
+          >{{ p.label }} <span class="num opacity-60">{{ p.count }}</span></button>
+        </div>
+
+        <div class="space-y-3 px-4 pt-3">
+          <TripCard v-for="t in shown" :key="t.id" :trip="t" @click="choose(t)" />
+        </div>
+        <p class="px-8 pt-6 text-center text-[13px] leading-[19px] text-gravier">
+          Les horaires peuvent varier selon la circulation. Présentez-vous en gare 30 minutes avant le départ.
+        </p>
+      </template>
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useSearchStore } from '@/stores/search'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import type { Trajet } from '@/types'
-
-const router = useRouter()
-const search = useSearchStore()
-
-const sorted = computed<Trajet[]>(() => [...search.results].sort((a, b) => a.heure_depart.localeCompare(b.heure_depart)))
-
-function gareName(id) { return search.gares.find(g => g.id === id)?.nom || '?' }
-function formatDate(d) {
-  if (!d) return ''
-  const today = new Date().toISOString().slice(0, 10)
-  if (d === today) return 'Aujourd\'hui'
-  return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-}
-function fmt(p) { return new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' }
-
-onMounted(() => search.search())
-</script>

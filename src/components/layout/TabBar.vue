@@ -1,63 +1,61 @@
-<template>
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-nuit pb-safe max-w-[430px] mx-auto">
-    <div class="flex">
-      <router-link
-        v-for="tab in tabs"
-        :key="tab.to"
-        :to="tab.to"
-        class="flex-1 flex flex-col items-center pt-3 pb-2 gap-1 relative transition-colors duration-200"
-        :class="isActive(tab.to) ? 'text-white' : 'text-slate-500'"
-      >
-        <!-- Icône -->
-        <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" :stroke-width="isActive(tab.to) ? '2' : '1.75'" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icon" />
-        </svg>
-
-        <span class="text-[10px] font-sans font-medium tracking-wide">{{ tab.label }}</span>
-
-        <!-- Barre active Soleil -->
-        <transition name="tab-bar">
-          <span v-if="isActive(tab.to)" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[2.5px] rounded-full bg-soleil" />
-        </transition>
-      </router-link>
-    </div>
-  </nav>
-</template>
-
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { House, Clock3, Ticket, CircleUserRound } from 'lucide-vue-next'
+import { useTicketsStore } from '@/stores/tickets'
+import { haptic } from '@/lib/haptics'
 
 const route = useRoute()
+const router = useRouter()
+const tickets = useTicketsStore()
 
-const tabs = [
-  {
-    to: '/',
-    label: 'Accueil',
-    icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
-  },
-  {
-    to: '/billets',
-    label: 'Mes billets',
-    icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z',
-  },
-  {
-    to: '/recherche',
-    label: 'Réservations',
-    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
-  },
-  {
-    to: '/profil',
-    label: 'Profil',
-    icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-  },
-]
+const tabs = computed(() => [
+  { name: 'home',       to: '/',        label: 'Accueil', icon: House },
+  { name: 'departures', to: '/departs', label: 'Départs', icon: Clock3 },
+  { name: 'tickets',    to: '/billets', label: 'Billets', icon: Ticket, badge: tickets.upcoming.length },
+  { name: 'profile',    to: '/profil',  label: 'Profil',  icon: CircleUserRound },
+])
 
-function isActive(path) {
-  return path === '/' ? route.path === '/' : route.path.startsWith(path)
+function select(tab: { name: string; to: string }) {
+  haptic.tap()
+  if (route.name === tab.name) {
+    // Comme sur une app native : toucher l'onglet actif remonte en haut
+    window.dispatchEvent(new CustomEvent('mot:tab-reselect', { detail: tab.name }))
+    return
+  }
+  router.push(tab.to)
 }
 </script>
 
-<style scoped>
-.tab-bar-enter-active, .tab-bar-leave-active { transition: transform 0.18s ease, opacity 0.15s ease; }
-.tab-bar-enter-from, .tab-bar-leave-to       { transform: translateX(-50%) scaleX(0); opacity: 0; }
-</style>
+<template>
+  <nav
+    class="absolute inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface/95 backdrop-blur-xl"
+    :style="{ paddingBottom: 'var(--safe-bottom)' }"
+    aria-label="Navigation principale"
+  >
+    <div class="flex h-16 items-stretch">
+      <button
+        v-for="tab in tabs"
+        :key="tab.name"
+        type="button"
+        class="flex flex-1 flex-col items-center justify-center gap-1"
+        :aria-current="route.name === tab.name ? 'page' : undefined"
+        @click="select(tab)"
+      >
+        <span
+          class="relative flex h-8 w-[58px] items-center justify-center rounded-full transition-colors duration-200"
+          :class="route.name === tab.name ? 'bg-bleu-50 text-bleu-ink' : 'text-asphalte'"
+        >
+          <component :is="tab.icon" class="h-[22px] w-[22px]" :stroke-width="route.name === tab.name ? 2.2 : 1.8" />
+          <span
+            v-if="tab.badge"
+            class="absolute right-2.5 top-0 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-rouge px-1 text-[10.5px] font-bold leading-none text-white ring-2 ring-surface"
+          >{{ tab.badge }}</span>
+        </span>
+        <span class="text-[12px] font-semibold leading-none" :class="route.name === tab.name ? 'text-bleu-ink' : 'text-asphalte'">
+          {{ tab.label }}
+        </span>
+      </button>
+    </div>
+  </nav>
+</template>

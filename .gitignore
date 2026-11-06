@@ -6,3 +6,8 @@ dist/
 AppData/
 *.log
 *.timestamp-*.mjs
+
+# Service worker de développement (généré, plus utilisé)
+dev-dist/
+# Fichiers temporaires égarés
+*dev-output.txt
