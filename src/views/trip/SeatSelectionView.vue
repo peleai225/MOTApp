@@ -1,146 +1,126 @@
-<template>
-  <div class="page-container bg-slate-50">
-    <PageHeader title="Choix des sièges" />
+﻿<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
+import { Armchair, CloudOff } from 'lucide-vue-next'
+import AppBar from '@/components/layout/AppBar.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import SeatMap from '@/components/mot/SeatMap.vue'
+import { useBookingStore } from '@/stores/booking'
+import { errorMessage, trajetApi } from '@/api'
+import { toSeatRows } from '@/lib/seats'
+import { fcfa, plural } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
+import type { Siege } from '@/types'
 
-    <div v-if="loading" class="flex-1 px-5 py-6 flex flex-col gap-4">
-      <div class="skeleton h-64" />
+const route = useRoute()
+const router = useRouter()
+const booking = useBookingStore()
+
+const rows = ref<(Siege | null)[][]>([])
+const state = ref<'loading' | 'ready' | 'error'>('loading')
+const error = ref('')
+const selected = ref<string[]>([...booking.seats])
+
+const trip = computed(() => booking.trip)
+const need = computed(() => booking.places)
+const free = computed(() => rows.value.flat().filter(s => s?.disponible).length)
+
+async function load() {
+  state.value = 'loading'
+  try {
+    const [, seatsRes] = await Promise.all([
+      booking.ensureTrip(route.params.id as string),
+      trajetApi.sieges(route.params.id as string),
+    ])
+    rows.value = toSeatRows(seatsRes.data)
+    // Retire les places déjà prises entre-temps
+    const freeSet = new Set(rows.value.flat().filter(s => s?.disponible).map(s => s!.numero))
+    selected.value = selected.value.filter(n => freeSet.has(n)).slice(0, need.value)
+    state.value = 'ready'
+  } catch (e) {
+    error.value = errorMessage(e, 'Le plan du car ne se charge pas.')
+    state.value = 'error'
+  }
+}
+onMounted(load)
+
+function toggle(s: Siege) {
+  const i = selected.value.indexOf(s.numero)
+  if (i >= 0) { selected.value.splice(i, 1); haptic.tap(); return }
+  if (selected.value.length < need.value) { selected.value.push(s.numero); haptic.select(); return }
+  if (need.value === 1) { selected.value = [s.numero]; haptic.select(); return }
+  haptic.warning()
+  toast(`Vous avez déjà choisi ${plural(need.value, 'place')}`, { description: 'Touchez une place choisie pour la libérer.' })
+}
+
+const complete = computed(() => selected.value.length === need.value)
+
+function proceed(auto = false) {
+  booking.seats = auto ? [] : [...selected.value]
+  haptic.tap()
+  router.push({ name: 'checkout' })
+}
+</script>
+
+<template>
+  <div class="view">
+    <AppBar title="Choisissez vos places" :subtitle="trip ? `${trip.origine.nom} – ${trip.destination.nom}, ${trip.heure_depart}` : undefined" />
+
+    <div v-if="state === 'loading'" class="flex flex-1 flex-col items-center px-5 pt-6">
+      <div class="skeleton h-4 w-56" />
+      <div class="skeleton mt-6 h-[460px] w-full max-w-[312px] rounded-[48px_48px_26px_26px]" />
     </div>
 
-    <div v-else class="flex-1 flex flex-col">
-      <div class="px-5 py-4 flex-1 overflow-y-auto">
-        <!-- Légende -->
-        <div class="flex items-center gap-4 mb-4 text-xs text-slate-500">
-          <span class="flex items-center gap-1.5"><span class="w-5 h-5 rounded border-2 border-slate-200 bg-white inline-block" /> Libre</span>
-          <span class="flex items-center gap-1.5"><span class="w-5 h-5 rounded bg-slate-300 inline-block" /> Occupé</span>
-          <span class="flex items-center gap-1.5"><span class="w-5 h-5 rounded bg-primary inline-block" /> Sélectionné</span>
+    <EmptyState v-else-if="state === 'error'" :icon="CloudOff" tone="error" title="Plan indisponible" :text="error">
+      <button type="button" class="btn-primary" @click="load">Réessayer</button>
+      <button type="button" class="btn-ghost" @click="proceed(true)">Continuer sans choisir</button>
+    </EmptyState>
+
+    <EmptyState
+      v-else-if="!rows.length"
+      :icon="Armchair"
+      title="Placement à bord"
+      text="Ce car n’a pas encore de plan de places. Votre place vous sera attribuée automatiquement."
+    >
+      <button type="button" class="btn-primary" @click="proceed(true)">Continuer</button>
+    </EmptyState>
+
+    <template v-else>
+      <div class="view-scroll pb-6">
+        <div class="px-5 pb-4 pt-3 text-center">
+          <p class="text-[16px] font-semibold">
+            {{ complete ? 'C’est noté' : `Choisissez ${plural(need, 'place')}` }}
+            <span class="num ml-1 text-bleu-ink">{{ selected.length }}/{{ need }}</span>
+          </p>
+          <p class="mt-0.5 text-[14px] text-asphalte">{{ plural(free, 'place libre', 'places libres') }} dans ce car</p>
         </div>
 
-        <!-- Avant du bus -->
-        <div class="text-center text-xs text-slate-400 mb-3 flex items-center gap-2">
-          <div class="flex-1 h-px bg-slate-200" />
-          <span>🚌 Avant du bus</span>
-          <div class="flex-1 h-px bg-slate-200" />
+        <div class="mb-5 flex items-center justify-center gap-5 text-[13px] text-asphalte">
+          <span class="flex items-center gap-1.5"><span class="h-4 w-4 rounded-[5px] bg-surface shadow-seat" />Libre</span>
+          <span class="flex items-center gap-1.5"><span class="h-4 w-4 rounded-[5px] bg-bleu" />Votre choix</span>
+          <span class="flex items-center gap-1.5"><span class="h-4 w-4 rounded-[5px] seat-hatch" />Occupée</span>
         </div>
 
-        <!-- Plan des sièges -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm overflow-x-auto">
-          <div class="flex flex-col gap-2 min-w-[200px]">
-            <div v-for="(rangee, ri) in rangees" :key="ri" class="flex items-center justify-center gap-2">
-              <div class="flex gap-1">
-                <button
-                  v-for="siege in rangee.slice(0, 2)"
-                  :key="siege?.numero"
-                  :disabled="!siege || !siege.disponible"
-                  class="w-9 h-9 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center justify-center"
-                  :class="siegeClass(siege)"
-                  @click="toggleSiege(siege)"
-                >
-                  {{ siege?.numero?.replace(/[A-Z]/g, '') || '' }}
-                </button>
-              </div>
-              <div class="w-4" />
-              <div class="flex gap-1">
-                <button
-                  v-for="siege in rangee.slice(2)"
-                  :key="siege?.numero"
-                  :disabled="!siege || !siege.disponible"
-                  class="w-9 h-9 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center justify-center"
-                  :class="siegeClass(siege)"
-                  @click="toggleSiege(siege)"
-                >
-                  {{ siege?.numero?.replace(/[A-Z]/g, '') || '' }}
-                </button>
-              </div>
-            </div>
+        <div class="px-5">
+          <SeatMap :rows="rows" :selected="selected" @toggle="toggle" />
+        </div>
+      </div>
+
+      <div class="safe-bottom shrink-0 border-t border-hairline bg-surface px-5 pt-3">
+        <div class="flex items-center gap-4">
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-[13px] text-asphalte">
+              {{ selected.length ? `Place${selected.length > 1 ? 's' : ''} ${selected.join(', ')}` : 'Aucune place choisie' }}
+            </p>
+            <p class="num font-display text-[26px] font-semibold leading-7">{{ fcfa(booking.total) }}</p>
           </div>
+          <button type="button" class="btn-primary" :disabled="!complete" @click="proceed()">Continuer</button>
         </div>
-
-        <!-- Attribution auto -->
-        <button class="mt-4 w-full text-center text-sm text-primary font-medium" @click="autoAssign">
-          Attribution automatique
+        <button type="button" class="mt-1 w-full py-2 text-[14px] font-semibold text-bleu-ink" @click="proceed(true)">
+          Laisser MOT choisir mes places
         </button>
       </div>
-
-      <!-- Résumé + CTA -->
-      <div class="px-5 py-4 bg-white border-t border-slate-100">
-        <div class="flex justify-between text-sm mb-3">
-          <span class="text-slate-500">
-            {{ selected.length ? `Siège(s) : ${selected.join(', ')}` : 'Aucun siège sélectionné' }}
-          </span>
-          <span class="font-bold text-neutral-900">{{ fmt(total) }}</span>
-        </div>
-        <Button class="w-full" :disabled="!canProceed" @click="proceed">
-          Passer au paiement →
-        </Button>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { trajetApi } from '@/api'
-import { useSearchStore } from '@/stores/search'
-import { toast } from 'vue-sonner'
-import PageHeader from '@/components/layout/PageHeader.vue'
-import { Button } from '@/components/ui/button'
-
-const route  = useRoute()
-const router = useRouter()
-const search = useSearchStore()
-
-const loading  = ref(true)
-const config   = ref(null)
-const selected = ref<string[]>([])
-
-const rangees = computed(() => config.value?.rangees || [])
-
-const total = computed(() => {
-  const trip = search.results.find(t => t.id == route.params.id)
-  return (trip?.prix_adulte || 0) * search.params.places
-})
-
-const canProceed = computed(() => selected.value.length === search.params.places || selected.value.length === 0)
-
-function siegeClass(siege) {
-  if (!siege) return 'opacity-0 pointer-events-none'
-  if (!siege.disponible) return 'bg-slate-200 text-slate-400 cursor-not-allowed'
-  if (selected.value.includes(siege.numero)) return 'bg-primary text-white scale-105 shadow-sm'
-  return 'bg-slate-50 border border-slate-200 text-slate-700 hover:border-primary'
-}
-
-function toggleSiege(siege) {
-  if (!siege?.disponible) { toast.info('Siège déjà réservé'); return }
-  const idx = selected.value.indexOf(siege.numero)
-  if (idx >= 0) {
-    selected.value.splice(idx, 1)
-  } else if (selected.value.length < search.params.places) {
-    selected.value.push(siege.numero)
-  } else {
-    toast.info(`Tu peux sélectionner ${search.params.places} siège(s) maximum`)
-  }
-}
-
-function autoAssign() {
-  selected.value = []
-  router.push({ name: 'payment', query: { depart: route.params.id } })
-}
-
-function proceed() {
-  const q = { depart: route.params.id }
-  if (selected.value.length) q.sieges = selected.value.join(',')
-  router.push({ name: 'payment', query: q })
-}
-
-function fmt(p) { return new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' }
-
-onMounted(async () => {
-  try {
-    const { data } = await trajetApi.sieges(route.params.id)
-    config.value = data
-  } finally {
-    loading.value = false
-  }
-})
-</script>

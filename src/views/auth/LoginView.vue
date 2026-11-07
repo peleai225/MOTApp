@@ -1,80 +1,124 @@
-<template>
-  <div class="page-white flex flex-col">
-    <!-- Header Nuit -->
-    <div class="bg-nuit px-6 pt-safe pb-8">
-      <button @click="router.back()" class="mt-4 mb-6 w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 text-white">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <h1 class="font-display text-2xl font-bold text-white">Connexion</h1>
-      <p class="font-sans text-sm text-white/50 mt-1">Bon retour parmi nous.</p>
-    </div>
-
-    <!-- Formulaire -->
-    <div class="flex-1 px-6 py-8 flex flex-col gap-5">
-      <AppInput
-        v-model="form.telephone"
-        label="Numéro de téléphone"
-        type="tel"
-        placeholder="+225 07 00 00 00 00"
-        :error="errors.telephone"
-        required
-      />
-      <div>
-        <AppInput
-          v-model="form.password"
-          label="Mot de passe"
-          type="password"
-          placeholder="••••••••"
-          :error="errors.password"
-          required
-        />
-        <div class="flex justify-end mt-2">
-          <button class="font-sans text-xs text-voyage">Mot de passe oublié ?</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- CTA fixe en bas -->
-    <div class="px-6 pb-10 pt-4 flex flex-col gap-4 border-t border-slate-100">
-      <Button class="w-full" :disabled="loading" @click="submit">Se connecter</Button>
-      <p class="text-center font-sans text-sm text-pierre">
-        Pas de compte ?
-        <router-link to="/register" class="text-route font-semibold"> Créer un compte</router-link>
-      </p>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+﻿<script setup lang="ts">
+import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import { FlaskConical, MessageCircle, Phone } from 'lucide-vue-next'
+import AppBar from '@/components/layout/AppBar.vue'
 import AppInput from '@/components/ui/AppInput.vue'
-import { Button } from '@/components/ui/button'
+import BottomSheet from '@/components/ui/BottomSheet.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useTicketsStore } from '@/stores/tickets'
+import { errorMessage, isDemo } from '@/api'
+import { DEMO_ACCOUNT } from '@/api/demo'
+import { formatPhone } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
+import { BRAND } from '@/config'
 
 const router = useRouter()
-const route  = useRoute()
-const auth   = useAuthStore()
+const route = useRoute()
+const auth = useAuthStore()
+const tickets = useTicketsStore()
 
-const loading = ref<boolean>(false)
-const form    = reactive({ telephone: '', password: '' })
-const errors  = reactive({ telephone: '', password: '' })
+const form = reactive({ telephone: '', password: '' })
+const err = reactive({ telephone: '', password: '' })
+const loading = ref(false)
+const forgot = ref(false)
+
+function fillDemo() {
+  form.telephone = DEMO_ACCOUNT.telephone
+  form.password = DEMO_ACCOUNT.password
+  haptic.select()
+}
 
 async function submit() {
-  errors.telephone = ''; errors.password = ''
-  if (!form.telephone) { errors.telephone = 'Numéro obligatoire'; return }
-  if (!form.password)  { errors.password  = 'Mot de passe obligatoire'; return }
+  err.telephone = ''; err.password = ''
+  if (form.telephone.replace(/\D/g, '').length < 8) err.telephone = 'Entrez votre numéro de téléphone.'
+  if (!form.password) err.password = 'Entrez votre mot de passe.'
+  if (err.telephone || err.password) { haptic.warning(); return }
+
   loading.value = true
   try {
-    await auth.login(form)
-    router.push(route.query.redirect || '/')
+    const client = await auth.login(form.telephone, form.password)
+    tickets.clear()
+    haptic.success()
+    toast.success(`Bienvenue ${client.prenom}`)
+    const redirect = typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/') ? route.query.redirect : '/'
+    router.replace(redirect)
   } catch (e) {
-    toast.error(e.response?.data?.errors?.telephone?.[0] || 'Téléphone ou mot de passe incorrect.')
+    haptic.warning()
+    err.telephone = errorMessage(e, 'Téléphone ou mot de passe incorrect.')
   } finally {
     loading.value = false
   }
 }
 </script>
+
+<template>
+  <div class="view bg-surface">
+    <AppBar back-to="/bienvenue" />
+
+    <form class="view-scroll px-6 pb-6" novalidate @submit.prevent="submit">
+      <h1 class="font-display text-[40px] font-semibold leading-none">Connexion</h1>
+      <p class="mt-2 text-[16px] text-asphalte">Avec le numéro utilisé lors de votre inscription.</p>
+
+      <button
+        v-if="isDemo"
+        type="button"
+        class="tap mt-5 flex w-full items-start gap-3 rounded-2xl bg-ambre-50 px-4 py-3 text-left"
+        @click="fillDemo"
+      >
+        <FlaskConical class="mt-0.5 h-5 w-5 shrink-0 text-ambre" />
+        <span class="text-[14px] leading-5">
+          <span class="font-semibold">Mode démo.</span> Touchez ici pour utiliser le compte de test
+          <span class="num font-semibold">{{ DEMO_ACCOUNT.telephone }}</span>.
+        </span>
+      </button>
+
+      <div class="mt-7 space-y-5">
+        <AppInput
+          v-model="form.telephone"
+          label="Téléphone"
+          type="tel"
+          inputmode="tel"
+          autocomplete="tel"
+          placeholder="07 00 00 00 00"
+          enterkeyhint="next"
+          :error="err.telephone"
+          required
+          @blur="form.telephone = formatPhone(form.telephone)"
+        />
+        <AppInput
+          v-model="form.password"
+          label="Mot de passe"
+          type="password"
+          autocomplete="current-password"
+          enterkeyhint="go"
+          :error="err.password"
+          required
+          @enter="submit"
+        />
+      </div>
+      <button type="button" class="mt-3 py-1 text-[15px] font-semibold text-bleu-ink" @click="forgot = true">Mot de passe oublié&nbsp;?</button>
+      <button type="submit" class="hidden" tabindex="-1" aria-hidden="true" />
+    </form>
+
+    <div class="safe-bottom shrink-0 px-6 pt-3">
+      <button type="button" class="btn-primary w-full" :disabled="loading" @click="submit">
+        {{ loading ? 'Connexion…' : 'Se connecter' }}
+      </button>
+      <p class="py-3 text-center text-[15px] text-asphalte">
+        Pas encore de compte&nbsp;?
+        <RouterLink :to="{ name: 'register', query: route.query }" replace class="font-semibold text-bleu-ink">Créer un compte</RouterLink>
+      </p>
+    </div>
+
+    <BottomSheet v-model:open="forgot" title="Mot de passe oublié" description="Le service client MOT réinitialise votre mot de passe après vérification de votre identité.">
+      <template #footer>
+        <div class="flex flex-col gap-2">
+          <a :href="`tel:${BRAND.phone}`" class="btn-primary w-full"><Phone class="h-5 w-5" />Appeler le {{ BRAND.phoneDisplay }}</a>
+          <a :href="`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Bonjour, j’ai oublié mon mot de passe de l’application MOT.')}`" target="_blank" rel="noopener" class="btn-soft w-full"><MessageCircle class="h-5 w-5" />Écrire sur WhatsApp</a>
+        </div>
+      </template>
+    </BottomSheet>
+  </div>
+</template>

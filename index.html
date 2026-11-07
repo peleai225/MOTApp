@@ -2,20 +2,56 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0F1829" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Thème appliqué avant le premier affichage pour éviter un flash clair en mode sombre
+      (function () {
+        try {
+          var p = localStorage.getItem('mot_theme')
+          var dark = p === 'dark' || (p !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.classList.add('dark')
+        } catch (e) {}
+      })()
+    </script>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="MoT Transport" />
-    <meta name="description" content="Réservez vos billets de bus en quelques taps" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <link rel="preconnect" href="https://fonts.bunny.net" />
-    <link href="https://fonts.bunny.net/css?family=space-grotesk:400,500,600,700|dm-sans:400,500,600|jetbrains-mono:400,500&display=swap" rel="stylesheet" />
-    <title>MoT Transport</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MOT" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="description" content="Réservez votre car MOT, choisissez votre place et gardez votre billet dans votre téléphone." />
+    <link rel="icon" type="image/png" href="/icons/favicon-64.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <title>MOT Transport</title>
+    <style>
+      /* Écran de lancement : visible jusqu'au montage de l'app, évite le flash blanc */
+      html, body { margin: 0; background: #fff; }
+      #splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+        background: #fff; transition: opacity .35s ease, visibility .35s;
+      }
+      #splash img { width: 148px; height: auto; }
+      #splash .bar { width: 120px; height: 4px; border-radius: 4px; overflow: hidden; background: #EEF1FA; }
+      #splash .bar::after {
+        content: ''; display: block; width: 40%; height: 100%;
+        background: linear-gradient(90deg, #1F3285 0 55%, #DB2B1C 55% 100%);
+        animation: splash-run 1s cubic-bezier(.6,0,.3,1) infinite;
+      }
+      #splash.hide { opacity: 0; visibility: hidden; }
+      html.dark, html.dark body, html.dark #splash { background: #0B1020; }
+      html.dark #splash img { box-sizing: content-box; background: #fff; padding: 10px 14px; border-radius: 16px; }
+      html.dark #splash .bar { background: #1E2852; }
+      @keyframes splash-run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+      @media (prefers-reduced-motion: reduce) { #splash .bar::after { animation: none; width: 100%; } }
+    </style>
   </head>
   <body>
+    <div id="splash" aria-hidden="true">
+      <img src="/images/logo-mot.png" alt="" />
+      <div class="bar"></div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

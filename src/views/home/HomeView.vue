@@ -1,389 +1,311 @@
-<template>
-  <div class="flex flex-col min-h-dvh bg-gray-50">
-
-    <!-- ── Hero ───────────────────────────────────────── -->
-    <div class="relative bg-white overflow-hidden">
-      <!-- Ciel dégradé -->
-      <div class="absolute inset-0" style="background: linear-gradient(180deg,#D6EAF8 0%,#ffffff 65%)" />
-      <!-- Photo bus (positionnée à droite) -->
-      <img
-        src="/images/bus-hero.jpg"
-        alt=""
-        class="absolute right-0 bottom-0 h-44 object-contain"
-        style="max-width:60%; pointer-events:none;"
-      />
-
-      <!-- Barre logo + cloche -->
-      <div class="relative flex items-center justify-between px-5 mt-3" style="padding-top:max(16px,env(safe-area-inset-top))">
-        <img src="/images/logo-mot.png" alt="MoT Transport" class="h-10 object-contain" />
-        <button class="relative w-10 h-10 rounded-full bg-nuit flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-          </svg>
-          <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-route text-white text-[10px] font-bold flex items-center justify-center">2</span>
-        </button>
-      </div>
-
-      <!-- Texte hero -->
-      <div class="relative px-5 mt-4 pb-4" style="min-height:148px">
-        <p class="font-sans text-sm text-pierre">{{ greeting }}</p>
-        <h1 class="font-display text-[28px] font-bold text-nuit leading-tight mt-1">
-          Où allez-vous<br>
-          <span class="text-route">aujourd'hui ?</span>
-        </h1>
-        <p class="font-sans text-sm text-pierre mt-2 leading-snug">
-          Voyagez autrement,<br>
-          Voyagez avec <span class="text-route font-semibold">MOT</span>.
-        </p>
-      </div>
-
-      <!-- Bandeau 3 atouts -->
-      <div class="relative mx-4 mb-5 bg-nuit rounded-2xl px-3 py-3">
-        <div class="flex divide-x divide-white/10">
-          <div v-for="f in features" :key="f.title" class="flex-1 flex items-start gap-2 px-2.5 first:pl-1 last:pr-1">
-            <div class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="f.icon" />
-              </svg>
-            </div>
-            <div>
-              <p class="font-sans font-bold text-white text-[10px] tracking-wider leading-tight">{{ f.title }}</p>
-              <p class="font-sans text-white/55 text-[9px] leading-snug mt-0.5">{{ f.desc }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Contenu scrollable ────────────────────────── -->
-    <div class="flex-1 px-4 pb-28 space-y-3.5 mt-1">
-
-      <!-- Alerte réseau -->
-      <div v-if="apiDown" class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-        <svg class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-        </svg>
-        <div>
-          <p class="font-sans text-sm font-semibold text-amber-800">Service indisponible</p>
-          <p class="font-sans text-xs text-amber-600 mt-0.5">Impossible de charger les gares. Vérifiez votre connexion.</p>
-        </div>
-      </div>
-
-      <!-- ── Card recherche ─────────────────────────── -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <h2 class="font-display text-[17px] font-bold text-nuit mb-4">Rechercher un trajet</h2>
-
-        <!-- Départ -->
-        <button
-          class="w-full flex items-center gap-3 h-[56px] bg-gray-50 rounded-xl border border-slate-200 px-4 mb-2 text-left hover:border-route/60 transition-colors active:scale-[0.99]"
-          @click="openPicker('origine')"
-        >
-          <svg class="w-5 h-5 text-nuit flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-          </svg>
-          <div class="flex-1 min-w-0">
-            <p class="font-sans text-[10px] font-bold text-pierre uppercase tracking-wider">Départ</p>
-            <p class="font-sans text-sm font-semibold text-nuit truncate">
-              {{ gareName(search.params.origine) || 'Choisir une ville' }}
-            </p>
-          </div>
-          <!-- Swap -->
-          <span
-            class="w-8 h-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center flex-shrink-0 hover:border-nuit transition-colors"
-            @click.stop="search.swapVilles()"
-          >
-            <svg class="w-4 h-4 text-nuit" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
-            </svg>
-          </span>
-        </button>
-
-        <!-- Arrivée -->
-        <button
-          class="w-full flex items-center gap-3 h-[56px] bg-gray-50 rounded-xl border border-slate-200 px-4 mb-4 text-left hover:border-route/60 transition-colors active:scale-[0.99]"
-          @click="openPicker('destination')"
-        >
-          <svg class="w-5 h-5 text-route flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-          </svg>
-          <div class="flex-1 min-w-0">
-            <p class="font-sans text-[10px] font-bold text-pierre uppercase tracking-wider">Arrivée</p>
-            <p class="font-sans text-sm font-semibold text-nuit truncate">
-              {{ gareName(search.params.destination) || 'Choisir une ville' }}
-            </p>
-          </div>
-          <svg class="w-4 h-4 text-pierre flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-          </svg>
-        </button>
-
-        <!-- Date + Voyageurs -->
-        <div class="grid grid-cols-2 gap-3 mb-4">
-          <!-- Date native -->
-          <label class="relative flex items-center gap-2.5 h-[52px] bg-gray-50 rounded-xl border border-slate-200 px-3 cursor-pointer hover:border-route/60 transition-colors">
-            <svg class="w-4 h-4 text-nuit flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <div class="flex-1 min-w-0 pointer-events-none">
-              <p class="font-sans text-[10px] font-bold text-pierre uppercase tracking-wider">Date</p>
-              <p class="font-sans text-xs font-semibold text-nuit truncate">{{ formatDate(search.params.date) }}</p>
-            </div>
-            <svg class="w-3.5 h-3.5 text-pierre flex-shrink-0 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-            </svg>
-            <input type="date" :min="today" v-model="search.params.date" class="absolute inset-0 opacity-0 w-full cursor-pointer" />
-          </label>
-
-          <!-- Voyageurs → ouvre sheet -->
-          <button
-            class="flex items-center gap-2.5 h-[52px] bg-gray-50 rounded-xl border border-slate-200 px-3 text-left hover:border-route/60 transition-colors"
-            @click="showPassengers = true"
-          >
-            <svg class="w-4 h-4 text-nuit flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            <div class="flex-1 min-w-0">
-              <p class="font-sans text-[10px] font-bold text-pierre uppercase tracking-wider">Voyageurs</p>
-              <p class="font-sans text-xs font-semibold text-nuit">{{ search.params.places }} voyageur{{ search.params.places > 1 ? 's' : '' }}</p>
-            </div>
-            <svg class="w-3.5 h-3.5 text-pierre flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Bouton CTA -->
-        <button
-          class="w-full h-14 rounded-xl bg-route text-white font-sans font-bold text-sm flex items-center justify-center gap-2.5 uppercase tracking-widest active:scale-[0.98] transition-transform"
-          style="box-shadow:0 4px 18px rgba(233,85,13,0.38)"
-          @click="doSearch"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          Rechercher un trajet
-        </button>
-      </div>
-
-      <!-- ── Prochains départs ──────────────────────── -->
-      <div class="relative rounded-2xl overflow-hidden" style="min-height:156px">
-        <img src="/images/bus-interior.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-nuit/88" />
-        <div class="relative px-5 py-4">
-          <p class="font-sans text-[10px] font-bold text-white/55 uppercase tracking-widest mb-3">Prochains départs</p>
-          <div class="flex items-end gap-7 mb-4">
-            <div v-for="slot in timeSlots" :key="slot.time">
-              <p class="font-display text-2xl font-bold text-route leading-none">{{ slot.time }}</p>
-              <p class="font-sans text-xs text-white/55 mt-1">{{ slot.label }}</p>
-            </div>
-          </div>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                </svg>
-              </div>
-              <div>
-                <p class="font-display text-sm font-bold text-white">Abidjan ↔ Bouaké</p>
-                <p class="font-sans text-xs text-white/50">Départs tous les jours</p>
-              </div>
-            </div>
-            <button
-              class="h-9 px-3 rounded-xl border border-white/25 text-white font-sans text-[11px] font-semibold flex items-center gap-1.5 hover:bg-white/10 transition-colors"
-              @click="voirHoraires"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-              Voir les horaires
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Offre spéciale nuit ────────────────────── -->
-      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
-          <svg class="w-7 h-7 text-route" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M17 17h.01M3 12a9 9 0 1018 0 9 9 0 00-18 0zM9.5 9.5l5 5m-5 0l5-5"/>
-          </svg>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="font-display text-sm font-bold text-route">Offre spécial nuit</p>
-          <p class="font-sans text-[13px] font-semibold text-nuit">-15% sur tous les trajets de nuit</p>
-          <p class="font-sans text-xs text-pierre mt-0.5">20H00 - 05H00</p>
-        </div>
-        <button class="flex-shrink-0 h-10 px-4 rounded-xl bg-nuit text-white font-sans text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform">
-          J'en profite
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-          </svg>
-        </button>
-      </div>
-
-    </div>
-
-    <!-- ── Bottom sheet : sélecteur ville ─────────────── -->
-    <transition name="sheet">
-      <div v-if="picker.open" class="fixed inset-0 z-50 flex flex-col" @click.self="picker.open = false">
-        <div class="flex-1" />
-        <div class="sheet-content bg-white rounded-t-3xl max-h-[78vh] flex flex-col shadow-ticket">
-          <div class="flex justify-center pt-3 pb-1">
-            <div class="w-10 h-1 rounded-full bg-slate-200" />
-          </div>
-          <div class="px-5 pt-2 pb-3 border-b border-slate-100">
-            <h3 class="font-display text-base font-semibold text-encre mb-3">
-              {{ picker.field === 'origine' ? 'Ville de départ' : 'Ville d\'arrivée' }}
-            </h3>
-            <div class="relative">
-              <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-pierre" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-              </svg>
-              <input v-model="picker.query" type="text" placeholder="Rechercher…" class="input-field pl-10 h-11 text-sm" autofocus />
-            </div>
-          </div>
-          <div class="overflow-y-auto flex-1 divide-y divide-slate-50/80">
-            <button
-              v-for="g in filteredGares"
-              :key="g.id"
-              class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-brume transition-colors"
-              @click="selectGare(g)"
-            >
-              <div class="w-8 h-8 rounded-lg bg-brume flex items-center justify-center flex-shrink-0">
-                <svg class="w-4 h-4 text-voyage" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-              </div>
-              <div>
-                <p class="font-sans text-sm font-semibold text-encre">{{ g.nom }}</p>
-                <p class="font-sans text-xs text-pierre">{{ g.ville }}</p>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
-
-    <!-- ── Bottom sheet : voyageurs ───────────────────── -->
-    <transition name="sheet">
-      <div v-if="showPassengers" class="fixed inset-0 z-50 flex flex-col" @click.self="showPassengers = false">
-        <div class="flex-1" />
-        <div class="sheet-content bg-white rounded-t-3xl shadow-ticket">
-          <div class="flex justify-center pt-3 pb-1">
-            <div class="w-10 h-1 rounded-full bg-slate-200" />
-          </div>
-          <div class="px-5 pt-4 pb-8">
-            <h3 class="font-display text-base font-semibold text-encre mb-6">Nombre de voyageurs</h3>
-            <div class="flex items-center justify-between">
-              <span class="font-sans text-sm text-encre">Adultes</span>
-              <div class="flex items-center gap-5">
-                <button
-                  class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-route font-bold text-xl hover:border-route transition-colors active:scale-90"
-                  @click="search.params.places = Math.max(1, search.params.places - 1)"
-                >−</button>
-                <span class="font-display text-xl font-bold text-encre w-5 text-center">{{ search.params.places }}</span>
-                <button
-                  class="w-10 h-10 rounded-xl bg-route flex items-center justify-center text-white font-bold text-xl active:scale-90 transition-transform"
-                  @click="search.params.places = Math.min(10, search.params.places + 1)"
-                >+</button>
-              </div>
-            </div>
-            <button
-              class="w-full mt-7 h-13 h-[52px] bg-route rounded-xl text-white font-bold font-sans text-sm uppercase tracking-wider"
-              @click="showPassengers = false"
-            >
-              Confirmer
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
-
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+﻿<script setup lang="ts">
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useSearchStore } from '@/stores/search'
-import { useAuthStore }   from '@/stores/auth'
 import { toast } from 'vue-sonner'
-import type { Gare } from '@/types'
+import { ArrowRight, ArrowUpDown, ChevronRight, History, MessageCircle, Phone, Search, UserRound } from 'lucide-vue-next'
+import PullToRefresh from '@/components/ui/PullToRefresh.vue'
+import DayStrip from '@/components/ui/DayStrip.vue'
+import Stepper from '@/components/ui/Stepper.vue'
+import StationSheet from '@/components/mot/StationSheet.vue'
+import DepartureRow from '@/components/mot/DepartureRow.vue'
+import TicketStub from '@/components/mot/TicketStub.vue'
+import LiveryStripes from '@/components/mot/LiveryStripes.vue'
+import { useSearchStore } from '@/stores/search'
+import { useAuthStore } from '@/stores/auth'
+import { useTicketsStore } from '@/stores/tickets'
+import { useBookingStore } from '@/stores/booking'
+import { useTabReselect } from '@/composables/useTabReselect'
+import { trajetApi } from '@/api'
+import { initials, isoDate, longDate } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
+import { BRAND } from '@/config'
+import type { Gare, Trajet } from '@/types'
+
+defineOptions({ name: 'HomeView' })
 
 const router = useRouter()
 const search = useSearchStore()
-const auth   = useAuthStore()
-const today  = new Date().toISOString().slice(0, 10)
+const auth = useAuthStore()
+const tickets = useTicketsStore()
+const booking = useBookingStore()
 
-const picker         = ref({ open: false, field: 'origine' as 'origine' | 'destination', query: '' })
-const showPassengers = ref(false)
-const apiDown        = ref(false)
-
-const features = [
-  { title: 'SÉCURITÉ',     desc: 'Votre sécurité est notre priorité.',     icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-  { title: 'CONFORT',      desc: 'Des autocars modernes et tout confort.',  icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
-  { title: 'PONCTUALITÉ',  desc: 'Des départs à l\'heure, à chaque trajet.', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-]
-
-const timeSlots = [
-  { time: '07:30', label: 'Matin' },
-  { time: '14:00', label: 'Après-midi' },
-  { time: '20:30', label: 'Soir' },
-]
+const ptr = ref<InstanceType<typeof PullToRefresh> | null>(null)
+const scroller = computed(() => ptr.value?.el)
+useTabReselect('home', scroller)
 
 const greeting = computed(() => {
   const h = new Date().getHours()
-  return h < 12 ? 'Bonjour,' : h < 18 ? 'Bon après-midi,' : 'Bonsoir,'
+  const word = h >= 18 || h < 4 ? 'Bonsoir' : 'Bonjour'
+  return auth.firstName ? `${word} ${auth.firstName}` : word
 })
 
-const filteredGares = computed(() =>
-  search.gares.filter(g =>
-    g.nom.toLowerCase().includes(picker.value.query.toLowerCase()) ||
-    (g.ville || '').toLowerCase().includes(picker.value.query.toLowerCase())
-  )
-)
-
-function gareName(id: any): string | undefined {
-  // eslint-disable-next-line eqeqeq
-  return search.gares.find(g => g.id == id)?.nom
-}
-
-function formatDate(d: string): string {
-  if (!d || d === today) return "Aujourd'hui"
-  return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
-}
+// ── Itinéraire ──────────────────────────────────────────────────────────
+const picker = ref<{ open: boolean; field: 'origine' | 'destination' }>({ open: false, field: 'origine' })
+const origine = computed(() => search.gareById(search.origine))
+const destination = computed(() => search.gareById(search.destination))
 
 function openPicker(field: 'origine' | 'destination') {
-  picker.value = { open: true, field, query: '' }
+  haptic.tap()
+  picker.value = { open: true, field }
+}
+function onPick(g: Gare) {
+  search[picker.value.field] = g.id
+  // Enchaîne naturellement : après le départ, on demande l'arrivée
+  if (picker.value.field === 'origine' && !search.destination) {
+    setTimeout(() => openPicker('destination'), 380)
+  }
+}
+const swapTurn = ref(0)
+function swap() {
+  haptic.select()
+  swapTurn.value += 180
+  search.swap()
 }
 
-function selectGare(g: Gare) {
-  search.params[picker.value.field] = g.id as any
-  picker.value.open = false
-}
+if (search.date < isoDate()) search.date = isoDate()
 
 function doSearch() {
-  localStorage.setItem('mot_last_search', JSON.stringify({
-    origine: search.params.origine,
-    destination: search.params.destination,
-    date: search.params.date,
-    places: search.params.places,
-  }))
-  router.push('/recherche')
+  if (!search.origine) { haptic.warning(); openPicker('origine'); return }
+  if (!search.destination) { haptic.warning(); openPicker('destination'); return }
+  if (search.origine === search.destination) { toast.error('Choisissez deux gares différentes.'); return }
+  haptic.tap()
+  search.remember(search.origine, search.destination)
+  router.push({ name: 'search', query: { de: search.origine, a: search.destination, date: search.date, places: search.places } })
 }
 
-function voirHoraires() {
-  router.push('/recherche')
+function repeat(o: number, d: number) {
+  search.origine = o
+  search.destination = d
+  doSearch()
+}
+
+const recentList = computed(() =>
+  search.recent
+    .map(r => ({ ...r, o: search.gareById(r.origine), d: search.gareById(r.destination) }))
+    .filter(r => r.o && r.d)
+    .slice(0, 3),
+)
+
+// ── Prochains départs ───────────────────────────────────────────────────
+const boardGare = computed<Gare | undefined>(() =>
+  search.gareById(search.homeGare) ||
+  origine.value ||
+  search.gares.find(g => /yopougon/i.test(g.nom)) ||
+  search.gares[0],
+)
+const departures = ref<Trajet[]>([])
+const boardState = ref<'idle' | 'loading' | 'error'>('idle')
+let boardLoadedAt = 0
+
+async function loadBoard() {
+  if (!boardGare.value) { boardState.value = 'idle'; return }
+  const gareId = boardGare.value.id
+  boardState.value = departures.value.length ? 'idle' : 'loading'
+  try {
+    const { data } = await trajetApi.rechercher({ origine: gareId, date: isoDate(), places: 1 })
+    if (boardGare.value?.id !== gareId) return // réponse périmée : la gare a changé entre-temps
+    departures.value = (data.trajets || []).slice(0, 4)
+    boardState.value = 'idle'
+    boardLoadedAt = Date.now()
+  } catch {
+    if (boardGare.value?.id !== gareId) return
+    boardState.value = departures.value.length ? 'idle' : 'error'
+  }
+}
+watch(() => boardGare.value?.id, () => { departures.value = []; loadBoard() })
+
+function openTrip(t: Trajet) {
+  booking.start(t, 1)
+  router.push({ name: 'trip', params: { id: t.id } })
+}
+
+async function refreshAll() {
+  await Promise.allSettled([search.loadGares(true), loadBoard(), auth.isLoggedIn ? tickets.refresh() : null])
 }
 
 onMounted(async () => {
-  try {
-    await search.loadGares()
-  } catch {
-    apiDown.value = true
-    toast.error('Service temporairement indisponible', { description: 'Vérifiez votre connexion réseau' })
-  }
+  try { await search.loadGares() } catch { /* état d'erreur affiché plus bas */ }
+  loadBoard()
+  if (auth.isLoggedIn) { tickets.hydrate(); tickets.refresh() }
+})
+onActivated(() => {
+  if (Date.now() - boardLoadedAt > 120_000) loadBoard()
 })
 </script>
+
+<template>
+  <div class="view bg-surface">
+    <PullToRefresh ref="ptr" class="tabbar-space" :on-refresh="refreshAll">
+      <!-- ── Photo du car ── -->
+      <section class="relative h-[300px] overflow-hidden bg-[#2F6BD0]">
+        <img
+          src="/images/bus-720.jpg"
+          srcset="/images/bus-720.jpg 720w, /images/bus-1280.jpg 1280w"
+          sizes="(min-width: 430px) 430px, 100vw"
+          alt="Car MOT aux couleurs de la compagnie"
+          class="absolute inset-0 h-full w-full scale-[1.35] object-cover object-[38%_62%]"
+          fetchpriority="high"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-[#0D1530]/80 from-10% via-[#0D1530]/40 via-55% to-transparent" />
+        <div class="safe-top relative">
+          <div class="flex items-center justify-between px-4 pt-3">
+            <span class="rounded-[12px] bg-white px-2.5 py-1.5 shadow-lift">
+              <img src="/images/logo-mot.png" alt="MOT" class="h-6 w-auto" />
+            </span>
+            <RouterLink
+              to="/profil"
+              class="tap flex h-10 w-10 items-center justify-center rounded-full bg-surface text-bleu-ink shadow-lift"
+              :aria-label="auth.isLoggedIn ? 'Mon profil' : 'Se connecter'"
+            >
+              <span v-if="auth.user" class="font-display text-[17px] font-semibold">{{ initials(auth.user.prenom, auth.user.nom) }}</span>
+              <UserRound v-else class="h-5 w-5" />
+            </RouterLink>
+          </div>
+          <div class="px-5 pt-7 text-white">
+            <p class="text-[16px] font-medium text-white/90">{{ greeting }}</p>
+            <h1 class="mt-0.5 font-display text-[44px] font-semibold leading-[0.98] [text-shadow:0_2px_16px_rgba(13,21,48,0.35)]">
+              Où allez-vous&nbsp;?
+            </h1>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Recherche ── -->
+      <section class="relative z-10 -mt-[60px] overflow-hidden rounded-t-[30px] bg-surface px-5 pb-2 pt-6">
+        <LiveryStripes class="pointer-events-none absolute right-0 top-0 h-[38px] w-[150px] -scale-y-100" />
+
+        <div class="relative rounded-[22px] bg-ciel">
+          <span class="absolute bottom-[34px] left-[27px] top-[34px] border-l-2 border-dotted border-bleu-200" aria-hidden="true" />
+          <button type="button" class="tap flex w-full items-center gap-3.5 py-3 pl-[21px] pr-16 text-left" @click="openPicker('origine')">
+            <span class="relative h-3.5 w-3.5 shrink-0 rounded-full border-[3px] border-bleu-ink bg-surface" />
+            <span class="min-w-0 flex-1">
+              <span class="block text-[13px] text-asphalte">Départ</span>
+              <span class="block truncate text-[19px] font-semibold leading-6" :class="origine ? 'text-encre' : 'font-medium text-gravier'">
+                {{ origine?.nom || 'Choisir une gare' }}
+              </span>
+            </span>
+          </button>
+          <div class="ml-[54px] mr-16 h-px bg-hairline" />
+          <button type="button" class="tap flex w-full items-center gap-3.5 py-3 pl-[21px] pr-16 text-left" @click="openPicker('destination')">
+            <span class="relative h-3.5 w-3.5 shrink-0 rounded-full bg-rouge" />
+            <span class="min-w-0 flex-1">
+              <span class="block text-[13px] text-asphalte">Arrivée</span>
+              <span class="block truncate text-[19px] font-semibold leading-6" :class="destination ? 'text-encre' : 'font-medium text-gravier'">
+                {{ destination?.nom || 'Choisir une gare' }}
+              </span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="tap absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface text-bleu-ink shadow-lift"
+            aria-label="Inverser départ et arrivée"
+            @click="swap"
+          >
+            <ArrowUpDown class="h-5 w-5 transition-transform duration-300 ease-native" :style="{ transform: `rotate(${swapTurn}deg)` }" :stroke-width="2.2" />
+          </button>
+        </div>
+
+        <div class="mt-6 flex items-baseline justify-between gap-3">
+          <p class="text-[16px] font-semibold">Date du voyage</p>
+          <p class="truncate text-[13.5px] text-asphalte first-letter:uppercase">{{ longDate(search.date) }}</p>
+        </div>
+        <DayStrip v-model="search.date" class="mt-2.5" />
+
+        <div class="mt-5 flex items-center justify-between rounded-[22px] bg-ciel py-2.5 pl-4 pr-2.5">
+          <div>
+            <p class="text-[16px] font-semibold">Voyageurs</p>
+            <p class="text-[13px] text-asphalte">Jusqu'à 10 par réservation</p>
+          </div>
+          <Stepper v-model="search.places" label="Nombre de voyageurs" />
+        </div>
+
+        <button type="button" class="btn-primary mt-5 w-full" @click="doSearch">
+          <Search class="h-5 w-5" :stroke-width="2.4" />
+          Voir les départs
+        </button>
+      </section>
+
+      <!-- ── Prochain voyage ── -->
+      <section v-if="auth.isLoggedIn && tickets.next" class="mt-8 bg-ciel px-5 py-6">
+        <h2 class="section-title">Votre prochain voyage</h2>
+        <TicketStub class="mt-3" :ticket="tickets.next" @click="router.push({ name: 'ticket', params: { reference: tickets.next!.reference } })" />
+      </section>
+
+      <!-- ── Prochains départs ── -->
+      <section class="mt-8 px-5">
+        <div class="flex items-end justify-between">
+          <h2 class="section-title">Prochains départs</h2>
+          <RouterLink to="/departs" class="text-[15px] font-semibold text-bleu-ink">Tout voir</RouterLink>
+        </div>
+        <p v-if="boardGare" class="mt-1.5 text-[14px] text-asphalte">Au départ de {{ boardGare.nom }}, aujourd'hui</p>
+
+        <div v-if="boardState === 'loading' || (!boardGare && !search.garesError && !search.garesLoaded)" class="group-list mt-3">
+          <div v-for="i in 3" :key="i" class="flex items-center gap-4 px-4 py-4">
+            <div class="skeleton h-7 w-14" /><div class="flex-1 space-y-2"><div class="skeleton h-4 w-2/3" /><div class="skeleton h-3 w-1/3" /></div>
+          </div>
+        </div>
+        <div v-else-if="!boardGare && search.garesLoaded" class="mt-3 rounded-2xl bg-ciel px-4 py-5">
+          <p class="text-[15px] text-asphalte">Aucune gare n’est encore ouverte à la réservation en ligne. Le service client MOT peut vous renseigner sur les horaires.</p>
+        </div>
+        <div v-else-if="boardState === 'error' || search.garesError" class="mt-3 rounded-2xl bg-ciel px-4 py-5 text-center">
+          <p class="text-[15px] text-asphalte">Les horaires ne se chargent pas pour le moment.</p>
+          <button type="button" class="btn-ghost btn-sm mt-1" @click="refreshAll">Réessayer</button>
+        </div>
+        <div v-else-if="!departures.length" class="mt-3 rounded-2xl bg-ciel px-4 py-5">
+          <p class="text-[15px] text-asphalte">Plus aucun départ aujourd'hui depuis {{ boardGare?.nom }}.</p>
+          <RouterLink to="/departs" class="mt-1 inline-block text-[15px] font-semibold text-bleu-ink">Voir les départs de demain</RouterLink>
+        </div>
+        <div v-else class="group-list mt-3">
+          <DepartureRow v-for="t in departures" :key="t.id" :trip="t" @click="openTrip(t)" />
+        </div>
+      </section>
+
+      <!-- ── Recherches récentes ── -->
+      <section v-if="recentList.length" class="mt-8 px-5">
+        <div class="flex items-end justify-between">
+          <h2 class="section-title">Recherches récentes</h2>
+          <button type="button" class="text-[14px] font-medium text-asphalte" @click="search.forgetRecent()">Effacer</button>
+        </div>
+        <div class="group-list mt-3">
+          <button
+            v-for="r in recentList"
+            :key="`${r.origine}-${r.destination}`"
+            type="button"
+            class="tap-row flex w-full items-center gap-3 px-4 py-3.5 text-left"
+            @click="repeat(r.origine, r.destination)"
+          >
+            <History class="h-5 w-5 shrink-0 text-gravier" />
+            <span class="flex min-w-0 flex-1 items-center gap-2 text-[16px] font-semibold">
+              <span class="truncate">{{ r.o!.nom }}</span>
+              <ArrowRight class="h-4 w-4 shrink-0 text-gravier" />
+              <span class="truncate">{{ r.d!.nom }}</span>
+            </span>
+            <ChevronRight class="h-5 w-5 shrink-0 text-chevron" />
+          </button>
+        </div>
+      </section>
+
+      <!-- ── Aide ── -->
+      <section class="mt-8 px-5">
+        <div class="relative overflow-hidden rounded-[26px] bg-bleu p-5 text-white">
+          <LiveryStripes variant="on-blue" class="pointer-events-none absolute -right-2 bottom-0 h-[64px] w-[210px]" />
+          <p class="relative font-display text-[26px] font-semibold leading-7">Une question avant de partir&nbsp;?</p>
+          <p class="relative mt-1.5 max-w-[260px] text-[15px] leading-[21px] text-white/80">Le service client MOT vous répond par téléphone ou sur WhatsApp.</p>
+          <div class="relative mt-4 flex gap-2">
+            <a :href="`tel:${BRAND.phone}`" class="btn btn-sm bg-white text-[#1F3285]"><Phone class="h-4 w-4" />Appeler</a>
+            <a :href="`https://wa.me/${BRAND.whatsapp}`" target="_blank" rel="noopener" class="btn btn-sm bg-surface/15 text-white"><MessageCircle class="h-4 w-4" />WhatsApp</a>
+          </div>
+        </div>
+        <p class="mt-6 text-center text-[13px] text-gravier">{{ BRAND.fullName }}, {{ BRAND.tagline.toLowerCase() }}</p>
+      </section>
+    </PullToRefresh>
+
+    <StationSheet
+      v-model:open="picker.open"
+      :title="picker.field === 'origine' ? 'Gare de départ' : 'Gare d’arrivée'"
+      :selected="picker.field === 'origine' ? search.origine : search.destination"
+      :exclude="picker.field === 'origine' ? search.destination : search.origine"
+      @select="onPick"
+    />
+  </div>
+</template>

@@ -1,14 +1,17 @@
+﻿<script setup lang="ts">
+import { RouterView } from 'vue-router'
+import TabBar from '@/components/layout/TabBar.vue'
+</script>
+
 <template>
-  <div class="page-container pb-20">
-    <router-view v-slot="{ Component, route }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" :key="route.path" />
-      </transition>
-    </router-view>
+  <div class="view">
+    <RouterView v-slot="{ Component, route }">
+      <Transition name="tab">
+        <KeepAlive>
+          <component :is="Component" :key="String(route.name)" />
+        </KeepAlive>
+      </Transition>
+    </RouterView>
     <TabBar />
   </div>
 </template>
-
-<script setup lang="ts">
-import TabBar from '@/components/layout/TabBar.vue'
-</script>

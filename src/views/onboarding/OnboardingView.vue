@@ -1,128 +1,136 @@
+﻿<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import QrcodeVue from 'qrcode.vue'
+import { ArrowRight, Check } from 'lucide-vue-next'
+import { haptic } from '@/lib/haptics'
+import { addDays, dayLabel, isoDate } from '@/lib/format'
+
+const router = useRouter()
+const track = ref<HTMLElement | null>(null)
+const index = ref(0)
+
+const slides = [
+  { title: 'Réservez votre car sans passer au guichet', text: 'Cherchez un départ, comparez les horaires et réservez en quelques gestes, où que vous soyez.' },
+  { title: 'Choisissez votre place', text: 'Fenêtre ou couloir, à l’avant ou au fond : sélectionnez vos sièges sur le plan du car.' },
+  { title: 'Votre billet reste dans votre poche', text: 'Le QR code s’affiche même sans connexion. Et si vos plans changent, annulez jusqu’à 2 h avant le départ.' },
+]
+
+// Mini plan de car pour la 2ᵉ vignette
+const seatGrid = [
+  ['t', 'f', 't', 'f'], ['f', 's', 's', 't'], ['t', 'f', 'f', 'f'], ['f', 't', 't', 'f'], ['t', 'f', 'f', 't'],
+]
+
+function onScroll() {
+  const el = track.value
+  if (!el) return
+  const i = Math.round(el.scrollLeft / el.clientWidth)
+  if (i !== index.value) { index.value = i; haptic.select() }
+}
+
+function go(i: number) {
+  track.value?.scrollTo({ left: i * (track.value?.clientWidth || 0), behavior: 'smooth' })
+}
+
+function next() {
+  if (index.value < slides.length - 1) go(index.value + 1)
+  else finish()
+}
+
+function finish() {
+  haptic.tap()
+  localStorage.setItem('mot_onboarding_done', '1')
+  router.replace(localStorage.getItem('mot_token') ? { name: 'home' } : { name: 'welcome' })
+}
+</script>
+
 <template>
-  <div class="page-dark select-none" @touchstart="onTouchStart" @touchend="onTouchEnd">
+  <div class="view bg-surface">
+    <header class="safe-top shrink-0">
+      <div class="flex h-14 items-center justify-between px-5">
+        <img src="/images/logo-mot.png" alt="MOT" class="h-7 w-auto dark:box-content dark:rounded-lg dark:bg-white dark:px-2 dark:py-1" />
+        <button v-if="index < slides.length - 1" type="button" class="px-1 py-2 text-[15px] font-semibold text-asphalte" @click="finish">Passer</button>
+      </div>
+    </header>
 
-    <!-- Bouton Passer -->
-    <button
-      class="absolute top-12 right-5 z-10 font-sans text-sm text-white/50 hover:text-white/80 transition-colors pt-safe"
-      @click="finish"
-    >
-      Passer
-    </button>
-
-    <!-- Slides -->
-    <div class="flex-1 relative overflow-hidden">
-      <transition :name="dir" mode="out-in">
-        <div :key="current" class="absolute inset-0 flex flex-col items-center justify-end px-8 pb-0">
-
-          <!-- Illustration -->
-          <div class="flex-1 flex items-center justify-center w-full">
-            <div class="relative">
-              <!-- Cercle de fond -->
-              <div class="w-56 h-56 rounded-full opacity-10" :class="slides[current].ring" />
-              <!-- Icône centrale -->
-              <div class="absolute inset-0 flex items-center justify-center">
-                <svg class="w-28 h-28 text-white" fill="none" stroke="currentColor" :stroke-width="1.25" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" :d="slides[current].icon" />
-                </svg>
+    <div ref="track" class="no-scrollbar flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain" @scroll.passive="onScroll">
+      <section v-for="(s, i) in slides" :key="i" class="flex w-full shrink-0 snap-center snap-always flex-col px-6" :aria-hidden="i !== index">
+        <!-- Vignettes -->
+        <div class="flex min-h-0 flex-1 items-center justify-center py-4">
+          <div v-if="i === 0" class="relative w-full max-w-[330px]">
+            <div class="h-[270px] overflow-hidden rounded-[30px] bg-[#2F6BD0]">
+              <img src="/images/bus-720.jpg" alt="" class="h-full w-full scale-[1.4] object-cover object-[36%_62%]" />
+            </div>
+            <div class="absolute -bottom-6 left-4 right-4 rounded-[22px] bg-surface p-4 shadow-panel">
+              <div class="flex items-center gap-2 text-[15px] font-semibold">
+                <span class="h-3 w-3 rounded-full border-[3px] border-bleu-ink" />Yopougon
+                <span class="h-px flex-1 border-t-2 border-dotted border-bleu-200" />
+                <span class="h-3 w-3 rounded-full bg-rouge" />Bondoukou
+              </div>
+              <div class="mt-3 flex items-end justify-between">
+                <p class="text-[13px] text-asphalte">{{ dayLabel(addDays(isoDate(), 1)) }}, <span class="num font-semibold text-encre">08:30</span></p>
+                <p class="num font-display text-[22px] font-semibold leading-none text-bleu-ink">8 000 <span class="font-sans text-[12px]">FCFA</span></p>
               </div>
             </div>
           </div>
 
-          <!-- Texte -->
-          <div class="w-full pb-8 text-center">
-            <!-- Numéro slide -->
-            <p class="font-mono text-2xs text-white/30 tracking-widest mb-4">
-              0{{ current + 1 }} — 0{{ slides.length }}
-            </p>
-            <h2 class="font-display text-[28px] font-bold text-white leading-tight mb-3">
-              {{ slides[current].title }}
-            </h2>
-            <p class="font-sans text-[15px] text-white/60 leading-relaxed">
-              {{ slides[current].body }}
-            </p>
+          <div v-else-if="i === 1" class="w-[230px] rounded-[40px_40px_22px_22px] bg-surface px-5 pb-5 pt-6 shadow-[0_0_0_3px_rgb(var(--c-ligne)),0_24px_48px_-20px_rgba(13,21,48,0.3)]">
+            <div class="mb-4 border-b-2 border-dashed border-hairline pb-3 text-center text-[12px] font-semibold text-asphalte">Avant du car</div>
+            <div class="space-y-2.5">
+              <div v-for="(row, r) in seatGrid" :key="r" class="grid grid-cols-[1fr_1fr_14px_1fr_1fr] gap-2">
+                <template v-for="(c, ci) in row" :key="ci">
+                  <span v-if="ci === 2" />
+                  <span
+                    class="flex aspect-square items-center justify-center rounded-[9px_9px_6px_6px]"
+                    :class="c === 's' ? 'bg-bleu text-white' : c === 't' ? 'seat-hatch' : 'bg-surface shadow-seat'"
+                  >
+                    <Check v-if="c === 's'" class="h-4 w-4" :stroke-width="3" />
+                  </span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="w-[250px] -rotate-3 overflow-hidden rounded-[24px] bg-surface shadow-[0_24px_48px_-20px_rgba(13,21,48,0.35),0_0_0_1px_rgba(13,21,48,0.05)]">
+            <div class="bg-bleu px-4 pb-4 pt-3 text-white">
+              <div class="flex items-center justify-between text-[12px] text-white/75"><span>Billet de car</span><span class="num">MOT-4B7K</span></div>
+              <div class="mt-3 flex items-end justify-between">
+                <div><p class="num font-display text-[28px] font-semibold leading-none">08:30</p><p class="mt-1 text-[13px] font-semibold">Yopougon</p></div>
+                <div class="text-right"><p class="num font-display text-[28px] font-semibold leading-none">16:00</p><p class="mt-1 text-[13px] font-semibold">Bondoukou</p></div>
+              </div>
+            </div>
+            <div class="perforation bg-surface" style="--notch-bg:#fff"><span class="notch notch-l" /><span class="notch notch-r" /></div>
+            <div class="flex justify-center px-4 pb-5">
+              <QrcodeVue value="MOT-DEMO-ONBOARDING" :size="124" level="M" render-as="svg" foreground="#0D1530" />
+            </div>
           </div>
         </div>
-      </transition>
+
+        <div class="shrink-0 pb-2 pt-6">
+          <h2 class="font-display text-[36px] font-semibold leading-[1.02] text-encre">{{ s.title }}</h2>
+          <p class="mt-3 text-[16px] leading-[24px] text-asphalte">{{ s.text }}</p>
+        </div>
+      </section>
     </div>
 
-    <!-- Footer : pagination + bouton -->
-    <div class="px-6 pb-10 pt-6 flex flex-col items-center gap-6">
-      <!-- Dots -->
-      <div class="flex gap-2 items-center">
+    <footer class="safe-bottom flex shrink-0 items-center justify-between gap-4 px-6 pt-4">
+      <div class="flex items-center gap-2" role="tablist" aria-label="Étapes de la présentation">
         <button
           v-for="(_, i) in slides"
           :key="i"
-          class="rounded-full transition-all duration-300"
-          :class="i === current ? 'w-6 h-2 bg-soleil' : 'w-2 h-2 bg-white/20'"
-          @click="current = i"
+          type="button"
+          role="tab"
+          :aria-selected="i === index"
+          :aria-label="`Écran ${i + 1}`"
+          class="h-2 rounded-full transition-all duration-300 ease-native"
+          :class="i === index ? 'w-7 bg-bleu' : 'w-2 bg-chevron'"
+          @click="go(i)"
         />
       </div>
-
-      <!-- CTA -->
-      <div class="w-full max-w-xs">
-        <Button v-if="current < slides.length - 1" @click="next">
-          Suivant
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-          </svg>
-        </Button>
-        <Button v-else variant="outline" @click="finish">
-          Commencer
-        </Button>
-      </div>
-    </div>
-
+      <button type="button" class="btn-primary min-w-[150px]" @click="next">
+        {{ index < slides.length - 1 ? 'Suivant' : 'Commencer' }}
+        <ArrowRight v-if="index < slides.length - 1" class="h-5 w-5" />
+      </button>
+    </footer>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { Button } from '@/components/ui/button'
-
-const router  = useRouter()
-const current = ref<number>(0)
-const dir     = ref('slide')
-
-const slides = [
-  {
-    title: 'Partez quand vous voulez',
-    body:  'Cherchez et réservez votre place de bus depuis n\'importe où. La gare vient à vous.',
-    icon:  'M8 17l4 4 4-4m-4-5v9M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29',
-    ring:  'bg-voyage',
-  },
-  {
-    title: 'Votre ticket sur votre téléphone',
-    body:  'Recevez un QR code instantanément. Montrez-le à l\'entrée — c\'est tout ce qu\'il faut.',
-    icon:  'M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z',
-    ring:  'bg-soleil',
-  },
-  {
-    title: 'Annulez sans stress',
-    body:  'Changement de plan ? Annulez jusqu\'à 2h avant le départ, sans frais cachés, sans questions.',
-    icon:  'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-    ring:  'bg-route',
-  },
-]
-
-let touchX = 0
-function onTouchStart(e) { touchX = e.touches[0].clientX }
-function onTouchEnd(e) {
-  const d = touchX - e.changedTouches[0].clientX
-  if (d > 50 && current.value < slides.length - 1) next()
-  else if (d < -50 && current.value > 0) current.value--
-}
-
-function next() { current.value++ }
-
-function finish() {
-  localStorage.setItem('mot_onboarding_done', '1')
-  router.push('/bienvenue')
-}
-</script>
-
-<style scoped>
-.slide-enter-active, .slide-leave-active { transition: all 0.28s ease; }
-.slide-enter-from { opacity: 0; transform: translateX(32px); }
-.slide-leave-to   { opacity: 0; transform: translateX(-32px); }
-</style>

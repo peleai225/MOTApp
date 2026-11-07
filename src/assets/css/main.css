@@ -1,26 +1,97 @@
 @layer base {
   :root {
-    --background: 222 47% 11%;
-    --foreground: 40 80% 96%;
-    --card: 222 47% 11%;
-    --card-foreground: 40 80% 96%;
-    --popover: 227 26% 15%;
-    --popover-foreground: 40 80% 96%;
-    --primary: 20 89% 48%;
+    --background: 225 45% 97%;          /* ciel  #F4F6FB */
+    --foreground: 227 57% 12%;          /* encre #0D1530 */
+    --card: 0 0% 100%;
+    --card-foreground: 227 57% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 227 57% 12%;
+    --primary: 229 62% 32%;             /* bleu MOT #1F3285 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 224 76% 48%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 227 26% 15%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 38 92% 50%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
+    --secondary: 225 50% 95%;
+    --secondary-foreground: 229 62% 32%;
+    --muted: 225 45% 97%;
+    --muted-foreground: 226 17% 43%;
+    --accent: 225 50% 95%;
+    --accent-foreground: 229 62% 32%;
+    --destructive: 5 77% 48%;           /* rouge MOT #DB2B1C */
     --destructive-foreground: 0 0% 100%;
-    --border: 227 26% 20%;
-    --input: 227 26% 20%;
-    --ring: 20 89% 48%;
-    --radius: 0.75rem;
+    --border: 222 28% 92%;
+    --input: 222 28% 92%;
+    --ring: 229 62% 32%;
+    --radius: 14px;
+
+    /* Capacitor (Android) injecte --safe-area-inset-* ; le navigateur fournit env() */
+    --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+    --tabbar-h: 64px;
   }
+
+  /* ─── Jetons de couleur (canaux RGB) — thème clair ─── */
+  :root, .theme-light {
+    --c-surface: 255 255 255;
+    --c-ciel: 244 246 251;
+    --c-encre: 13 21 48;
+    --c-asphalte: 90 99 128;
+    --c-gravier: 140 147 168;
+    --c-ligne: 227 231 240;
+    --c-hairline: 234 237 244;
+    --c-track: 233 236 244;
+    --c-chevron: 195 201 216;
+    --c-field: 220 225 236;
+    --c-accent: 31 50 133;
+    --c-bleu-50: 238 241 250;
+    --c-bleu-100: 220 226 244;
+    --c-bleu-200: 182 194 232;
+    --c-rouge: 219 43 28;
+    --c-rouge-50: 253 236 234;
+    --c-vert: 14 143 78;
+    --c-vert-50: 231 246 238;
+    --c-ambre: 178 106 0;
+    --c-ambre-50: 255 245 222;
+    --c-backdrop: 233 237 245;
+    color-scheme: light;
+  }
+
+  /* ─── Thème sombre : bleu nuit profond, la marque garde ses couleurs de remplissage ─── */
+  .dark {
+    --c-surface: 23 30 51;
+    --c-ciel: 11 16 32;
+    --c-encre: 232 236 245;
+    --c-asphalte: 160 169 194;
+    --c-gravier: 112 121 148;
+    --c-ligne: 44 52 77;
+    --c-hairline: 36 44 67;
+    --c-track: 33 41 63;
+    --c-chevron: 82 92 120;
+    --c-field: 56 66 95;
+    --c-accent: 158 177 255;
+    --c-bleu-50: 30 40 84;
+    --c-bleu-100: 42 55 108;
+    --c-bleu-200: 82 100 168;
+    --c-rouge: 255 112 98;
+    --c-rouge-50: 66 24 26;
+    --c-vert: 84 205 140;
+    --c-vert-50: 18 50 37;
+    --c-ambre: 245 182 72;
+    --c-ambre-50: 58 43 14;
+    --c-backdrop: 4 6 14;
+    color-scheme: dark;
+
+    --background: 225 50% 8%;
+    --foreground: 222 40% 93%;
+    --card: 225 38% 15%;
+    --card-foreground: 222 40% 93%;
+    --popover: 225 38% 15%;
+    --popover-foreground: 222 40% 93%;
+    --secondary: 225 38% 20%;
+    --muted: 225 38% 15%;
+    --muted-foreground: 225 18% 69%;
+    --border: 225 30% 22%;
+    --input: 225 30% 22%;
+  }
+  /* Le billet reste clair dans les deux thèmes : lisibilité du QR et aspect « vrai billet » */
+  .dark .theme-light { color: rgb(var(--c-encre)); }
 }
 
 @tailwind base;
@@ -28,172 +99,204 @@
 @tailwind utilities;
 
 @layer base {
+  html, body, #app { height: 100%; }
   html {
     -webkit-tap-highlight-color: transparent;
-    scroll-behavior: smooth;
-    background-color: #EFF3FF;
+    -webkit-text-size-adjust: 100%;
+    background: rgb(var(--c-backdrop));
   }
   body {
-    font-family: "DM Sans", system-ui, sans-serif;
-    color: #1A1A2E;
-    background-color: #EFF3FF;
-    min-height: 100dvh;
+    margin: 0;
+    font-family: 'Barlow', system-ui, sans-serif;
+    font-size: 16px;
+    color: rgb(var(--c-encre));
+    background: rgb(var(--c-backdrop));
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
-  * { box-sizing: border-box; }
-  h1, h2, h3 {
-    font-family: "Space Grotesk", system-ui, sans-serif;
+  button, a, [role="button"], label, nav, header {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
+  button, a, input, select, textarea, label { touch-action: manipulation; }
+  button { font: inherit; color: inherit; }
+  img { -webkit-user-drag: none; }
+  h1, h2, h3 { font-family: 'Barlow Condensed', 'Barlow', system-ui, sans-serif; letter-spacing: 0; }
+  :focus-visible { outline: 2px solid rgb(var(--c-accent)); outline-offset: 2px; border-radius: 6px; }
+  input, textarea { font-size: 16px; } /* évite le zoom auto d'iOS */
 }
 
 @layer components {
-
-  /* ─── Boutons ─────────────────────────────────────────── */
-  .btn-base {
-    @apply relative overflow-hidden flex items-center justify-center
-           h-[52px] rounded-[12px] font-semibold text-base
-           transition-all duration-150 active:scale-[0.97] w-full;
-    font-family: "DM Sans", system-ui, sans-serif;
-  }
-  .btn-route {
-    @apply btn-base text-white;
-    background-color: #E9550D;
-    box-shadow: 0 4px 16px rgba(233,85,13,0.35);
-  }
-  .btn-route:disabled {
-    @apply bg-slate-300 shadow-none cursor-not-allowed;
-  }
-  .btn-outline {
-    @apply btn-base bg-transparent;
-    border: 1.5px solid #E9550D;
-    color: #E9550D;
-  }
-  .btn-outline-white {
-    @apply btn-base bg-transparent;
-    border: 1.5px solid rgba(255,255,255,0.4);
-    color: white;
-  }
-
-  /* ─── Inputs ──────────────────────────────────────────── */
-  .input-field {
-    @apply w-full h-[52px] rounded-[12px] bg-white border border-slate-200 px-4
-           text-sm placeholder-slate-400 transition-all duration-150;
-    font-family: "DM Sans", system-ui, sans-serif;
-    color: #1A1A2E;
-  }
-  .input-field:focus {
-    @apply outline-none;
-    border-color: #F59E0B;
-    box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
-  }
-
-  /* ─── Cards ───────────────────────────────────────────── */
-  .card {
-    @apply bg-white p-4 rounded-[16px];
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
-  }
-
-  /* ─── Ticket physique ─────────────────────────────────── */
-  .ticket-card {
-    @apply rounded-[16px] overflow-visible relative;
-    box-shadow: 0 4px 24px rgba(15,24,41,0.12);
-    margin-left: 4px;
-    margin-right: 4px;
-  }
-  .ticket-header {
-    @apply text-white px-4 py-3;
-    background-color: #0F1829;
-    border-radius: 16px 16px 0 0;
-  }
-  .ticket-body {
-    @apply px-4 py-4;
-    background-color: #FDF6EC;
-    border-radius: 0 0 16px 16px;
-  }
-  .ticket-tear {
+  /* ─── Cadre de l'app : plein écran sur mobile, "téléphone" centré sur grand écran ─── */
+  .app-frame {
     position: relative;
-    border-top: 2px dashed #E2E8F0;
-    background-color: #FDF6EC;
+    width: 100%;
+    max-width: 430px;
+    height: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+    background: rgb(var(--c-ciel));
+    isolation: isolate;
   }
-  .ticket-tear::before,
-  .ticket-tear::after {
-    content: '';
+  @media (min-width: 600px) {
+    .app-frame {
+      height: min(100%, 920px);
+      top: 50%;
+      transform: translateY(-50%);
+      border-radius: 28px;
+      box-shadow: 0 30px 80px -20px rgba(13, 21, 48, 0.35), 0 0 0 1px rgba(13, 21, 48, 0.06);
+    }
+  }
+
+  /* Mode démo : une bande réservée en haut, que tous les en-têtes respectent */
+  .app-frame.is-demo { --safe-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 22px); }
+
+  /* Chaque écran occupe tout le cadre et gère son propre défilement */
+  .view {
     position: absolute;
-    top: -13px;
-    width: 26px;
-    height: 26px;
-    background-color: #EFF3FF;
-    border-radius: 50%;
-    border: 1px solid #E2E8F0;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgb(var(--c-ciel));
   }
-  .ticket-tear::before { left: -21px; }
-  .ticket-tear::after  { right: -21px; }
+  .view-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .view-scroll::-webkit-scrollbar, .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
 
-  /* ─── Pages ───────────────────────────────────────────── */
-  .page {
-    @apply max-w-[430px] mx-auto min-h-dvh flex flex-col;
-    background-color: #EFF3FF;
-  }
-  .page-white {
-    @apply max-w-[430px] mx-auto min-h-dvh flex flex-col bg-white;
-  }
-  .page-dark {
-    @apply max-w-[430px] mx-auto min-h-dvh flex flex-col;
-    background-color: #0F1829;
-  }
+  /* ─── Retour tactile ─── */
+  .tap { transition: transform 140ms cubic-bezier(0.32, 0.72, 0, 1), background-color 140ms, opacity 140ms; }
+  .tap:active:not(:disabled) { transform: scale(0.97); }
+  .tap-row { transition: background-color 120ms; }
+  .tap-row:active { background-color: rgb(var(--c-bleu-50)); }
 
-  /* ─── Utilitaires ─────────────────────────────────────── */
-  .section-label {
-    @apply font-semibold uppercase tracking-widest;
-    font-family: "DM Sans", system-ui, sans-serif;
-    font-size: 10px;
-    line-height: 14px;
-    color: #6B7280;
-    margin-bottom: 8px;
+  /* ─── Boutons ─── */
+  .btn {
+    @apply tap inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap select-none;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 16px;
+    font-size: 16px;
+    letter-spacing: 0.01em;
   }
-  .pb-safe { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-  .pt-safe  { padding-top: max(16px, env(safe-area-inset-top)); }
+  .btn:disabled { opacity: 0.45; pointer-events: none; }
+  .btn-primary { @apply btn bg-bleu text-white shadow-cta; }
+  .btn-primary:active { background-color: #182867; }
+  .btn-secondary { @apply btn bg-surface text-bleu-ink; box-shadow: inset 0 0 0 1.5px rgb(var(--c-bleu-200)); }
+  .btn-soft { @apply btn bg-bleu-50 text-bleu-ink; }
+  .btn-ghost { @apply btn bg-transparent text-bleu-ink; }
+  .btn-danger { @apply btn bg-rouge-50 text-rouge; }
+  .btn-sm { height: 40px; padding: 0 16px; border-radius: 12px; font-size: 14px; }
+  .icon-btn {
+    @apply tap inline-flex items-center justify-center rounded-full text-encre;
+    width: 40px; height: 40px;
+  }
+  .icon-btn:active { background: rgb(var(--c-encre) / 0.08); }
 
-  /* ─── Skeleton shimmer ────────────────────────────────── */
+  /* ─── Surfaces ─── */
+  .panel { @apply bg-surface rounded-3xl; box-shadow: 0 1px 2px rgba(13,21,48,0.04), 0 0 0 1px rgb(var(--c-hairline)); }
+  .group-list { @apply bg-surface rounded-2xl overflow-hidden; box-shadow: 0 0 0 1px rgb(var(--c-hairline)); }
+  .group-list > * + * { border-top: 1px solid rgb(var(--c-hairline)); }
+  .section-title { @apply font-display text-[22px] font-semibold text-encre leading-none; }
+  .field-label { @apply block text-sm font-medium text-asphalte mb-1.5; }
+
+  .num { font-variant-numeric: tabular-nums lining-nums; }
+  .seat-hatch { background: repeating-linear-gradient(135deg, rgb(var(--c-track)) 0 4px, rgb(var(--c-ciel)) 4px 8px); }
+
+  /* ─── Chargement ─── */
   .skeleton {
-    @apply rounded-xl bg-slate-200 relative overflow-hidden;
+    position: relative;
+    overflow: hidden;
+    background: rgb(var(--c-track));
+    border-radius: 14px;
   }
   .skeleton::after {
     content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.65) 50%, transparent 100%);
-    animation: shimmer 1.5s infinite;
+    position: absolute; inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgb(var(--c-surface) / 0.6), transparent);
+    animation: shimmer 1.4s infinite;
   }
+
+  /* ─── Zones sûres ─── */
+  .safe-top    { padding-top: var(--safe-top); }
+  .safe-bottom { padding-bottom: max(12px, var(--safe-bottom)); }
+  .tabbar-space { padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 24px); }
+
+  /* ─── Perforation de billet ─── */
+  .perforation {
+    position: relative;
+    height: 22px;
+    background: inherit;
+  }
+  .perforation::before {
+    content: '';
+    position: absolute;
+    left: 18px; right: 18px; top: 50%;
+    border-top: 2px dashed rgba(13, 21, 48, 0.14);
+  }
+  .perforation > .notch {
+    position: absolute;
+    top: 0;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--notch-bg, rgb(var(--c-ciel)));
+  }
+  .perforation > .notch-l { left: -11px; }
+  .perforation > .notch-r { right: -11px; }
 }
 
-/* ─── Keyframes (hors layer) ──────────────────────────────── */
-@keyframes shimmer {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+@keyframes shimmer { to { transform: translateX(100%); } }
+
+/* ─── Transitions de navigation (push / pop façon app native) ─── */
+.push-enter-active, .push-leave-active,
+.pop-enter-active, .pop-leave-active {
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1), opacity 380ms ease;
+  will-change: transform;
+}
+.push-enter-active { z-index: 2; box-shadow: -12px 0 32px rgba(13, 21, 48, 0.10); }
+.push-enter-from   { transform: translateX(100%); }
+.push-leave-to     { transform: translateX(-26%); opacity: 0.7; }
+.pop-leave-active  { z-index: 2; box-shadow: -12px 0 32px rgba(13, 21, 48, 0.10); }
+.pop-enter-from    { transform: translateX(-26%); opacity: 0.7; }
+.pop-leave-to      { transform: translateX(100%); }
+
+.rise-enter-active, .rise-leave-active { transition: transform 420ms cubic-bezier(0.32, 0.72, 0, 1), opacity 300ms ease; }
+.rise-enter-active { z-index: 2; }
+.rise-enter-from   { transform: translateY(8%); opacity: 0; }
+.rise-leave-to     { opacity: 0; }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 160ms ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.tab-enter-active { transition: opacity 140ms ease; }
+.tab-enter-from { opacity: 0; }
+
+/* ─── Toasts (vue-sonner) ─── */
+[data-sonner-toaster] { --width: min(390px, calc(100vw - 32px)); font-family: 'Barlow', system-ui, sans-serif; }
+[data-sonner-toast] {
+  border-radius: 16px !important;
+  font-size: 15px !important;
+  padding: 14px 16px !important;
+  box-shadow: 0 12px 32px -8px rgba(13, 21, 48, 0.35) !important;
 }
 
-/* ─── Transitions de vues ─────────────────────────────────── */
-.slide-enter-active,
-.slide-leave-active { transition: transform 0.22s ease, opacity 0.18s ease; }
-.slide-enter-from   { transform: translateX(24px); opacity: 0; }
-.slide-leave-to     { transform: translateX(-24px); opacity: 0; }
-
-.fade-enter-active,
-.fade-leave-active  { transition: opacity 0.18s ease; }
-.fade-enter-from,
-.fade-leave-to      { opacity: 0; }
-
-.sheet-enter-active,
-.sheet-leave-active { transition: all 0.28s cubic-bezier(0.32,0.72,0,1); }
-.sheet-enter-from,
-.sheet-leave-to     { opacity: 0; }
-.sheet-enter-from .sheet-content,
-.sheet-leave-to .sheet-content { transform: translateY(100%); }
-
-/* ─── Réduction de mouvement ──────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
+  .push-enter-from, .pop-leave-to, .push-leave-to, .pop-enter-from, .rise-enter-from { transform: none; }
 }

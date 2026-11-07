@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { AlertDialogTriggerProps } from "reka-ui"
 import { AlertDialogTrigger } from "reka-ui"
 

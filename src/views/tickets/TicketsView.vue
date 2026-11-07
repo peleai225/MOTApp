@@ -1,196 +1,113 @@
-<template>
-  <div class="page flex flex-col">
-    <!-- Header Nuit -->
-    <div class="bg-nuit px-5 pt-safe pb-5">
-      <h1 class="font-display text-xl font-bold text-white mt-3 mb-4">Mes Billets</h1>
-    </div>
-
-    <!-- Tabs -->
-    <Tabs default-value="avenir" class="flex-1 flex flex-col">
-      <TabsList class="mx-4 mt-4 w-auto bg-muted">
-        <TabsTrigger value="avenir" class="flex-1">
-          À venir ({{ upcoming.length }})
-        </TabsTrigger>
-        <TabsTrigger value="passes" class="flex-1">Passés</TabsTrigger>
-      </TabsList>
-
-      <!-- Tab: À venir -->
-      <TabsContent value="avenir" class="flex-1 px-4 py-5 overflow-y-auto pb-28">
-        <!-- Skeleton -->
-        <div v-if="loading" class="flex flex-col gap-4">
-          <Skeleton v-for="i in 3" :key="i" class="h-32 w-full rounded-card" />
-        </div>
-
-        <!-- Vide -->
-        <div v-else-if="!upcoming.length" class="flex flex-col items-center py-16 gap-4 text-center px-8">
-          <svg class="w-14 h-14 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.25" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
-          </svg>
-          <p class="font-display text-lg font-semibold text-encre">Aucun voyage prévu</p>
-          <p class="font-sans text-sm text-pierre leading-relaxed">
-            Réserve ton prochain bus en quelques secondes.
-          </p>
-          <Button class="max-w-[220px]" @click="router.push('/')">
-            Chercher un trajet
-          </Button>
-        </div>
-
-        <!-- Liste tickets style physique -->
-        <div v-else class="flex flex-col gap-4">
-          <div
-            v-for="t in upcoming"
-            :key="t.reference"
-            class="ticket-card cursor-pointer active:scale-[0.98] transition-transform"
-            @click="router.push(`/billet/${t.reference}`)"
-          >
-            <!-- Header ticket -->
-            <div class="ticket-header flex items-center justify-between">
-              <div>
-                <p class="font-mono text-2xs text-white/40 tracking-widest uppercase">MoT Transport</p>
-                <p class="font-mono text-xs text-white/70 tracking-widest mt-0.5">{{ t.reference }}</p>
-              </div>
-              <Badge
-                :variant="t.statut === 'valide' ? 'default' : t.statut === 'annule' ? 'destructive' : 'secondary'"
-              >
-                {{ { valide: 'Valide', utilise: 'Utilisé', annule: 'Annulé', expire: 'Expiré' }[t.statut] }}
-              </Badge>
-            </div>
-
-            <!-- Ligne perforée -->
-            <div class="ticket-tear" />
-
-            <!-- Corps ticket -->
-            <div class="ticket-body">
-              <div class="flex items-center justify-between mb-3">
-                <div>
-                  <p class="font-mono text-2xs text-pierre uppercase tracking-widest">Départ</p>
-                  <p class="font-display text-lg font-bold text-encre uppercase leading-tight">
-                    {{ t.trajet?.origine }}
-                  </p>
-                </div>
-                <svg class="w-5 h-5 text-route flex-shrink-0 mx-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13.025 1l-2.847 2.828 6.176 6.176h-16.354v3.992h16.354l-6.176 6.176 2.847 2.828 10.975-11z"/>
-                </svg>
-                <div class="text-right">
-                  <p class="font-mono text-2xs text-pierre uppercase tracking-widest">Arrivée</p>
-                  <p class="font-display text-lg font-bold text-encre uppercase leading-tight">
-                    {{ t.trajet?.destination }}
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center justify-between pt-3 border-t border-slate-200/60">
-                <p class="font-sans text-xs text-pierre">
-                  {{ t.trajet?.date_depart }} · {{ t.trajet?.heure }}
-                </p>
-                <p class="font-display text-sm font-bold text-encre">{{ fmt(t.montant_total) }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </TabsContent>
-
-      <!-- Tab: Passés -->
-      <TabsContent value="passes" class="flex-1 px-4 py-5 overflow-y-auto pb-28">
-        <!-- Skeleton -->
-        <div v-if="loading" class="flex flex-col gap-4">
-          <Skeleton v-for="i in 3" :key="i" class="h-32 w-full rounded-card" />
-        </div>
-
-        <!-- Vide -->
-        <div v-else-if="!past.length" class="flex flex-col items-center py-16 gap-4 text-center px-8">
-          <svg class="w-14 h-14 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.25" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
-          </svg>
-          <p class="font-display text-lg font-semibold text-encre">Aucun voyage passé</p>
-        </div>
-
-        <!-- Liste tickets passés -->
-        <div v-else class="flex flex-col gap-4">
-          <div
-            v-for="t in past"
-            :key="t.reference"
-            class="ticket-card cursor-pointer active:scale-[0.98] transition-transform"
-            @click="router.push(`/billet/${t.reference}`)"
-          >
-            <!-- Header ticket -->
-            <div class="ticket-header flex items-center justify-between">
-              <div>
-                <p class="font-mono text-2xs text-white/40 tracking-widest uppercase">MoT Transport</p>
-                <p class="font-mono text-xs text-white/70 tracking-widest mt-0.5">{{ t.reference }}</p>
-              </div>
-              <Badge
-                :variant="t.statut === 'valide' ? 'default' : t.statut === 'annule' ? 'destructive' : 'secondary'"
-              >
-                {{ { valide: 'Valide', utilise: 'Utilisé', annule: 'Annulé', expire: 'Expiré' }[t.statut] }}
-              </Badge>
-            </div>
-
-            <!-- Ligne perforée -->
-            <div class="ticket-tear" />
-
-            <!-- Corps ticket -->
-            <div class="ticket-body">
-              <div class="flex items-center justify-between mb-3">
-                <div>
-                  <p class="font-mono text-2xs text-pierre uppercase tracking-widest">Départ</p>
-                  <p class="font-display text-lg font-bold text-encre uppercase leading-tight">
-                    {{ t.trajet?.origine }}
-                  </p>
-                </div>
-                <svg class="w-5 h-5 text-route flex-shrink-0 mx-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13.025 1l-2.847 2.828 6.176 6.176h-16.354v3.992h16.354l-6.176 6.176 2.847 2.828 10.975-11z"/>
-                </svg>
-                <div class="text-right">
-                  <p class="font-mono text-2xs text-pierre uppercase tracking-widest">Arrivée</p>
-                  <p class="font-display text-lg font-bold text-encre uppercase leading-tight">
-                    {{ t.trajet?.destination }}
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center justify-between pt-3 border-t border-slate-200/60">
-                <p class="font-sans text-xs text-pierre">
-                  {{ t.trajet?.date_depart }} · {{ t.trajet?.heure }}
-                </p>
-                <p class="font-display text-sm font-bold text-encre">{{ fmt(t.montant_total) }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </TabsContent>
-    </Tabs>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+﻿<script setup lang="ts">
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { reservationApi } from '@/api'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { CloudOff, History, Ticket, TicketPlus } from 'lucide-vue-next'
+import PullToRefresh from '@/components/ui/PullToRefresh.vue'
+import Segmented from '@/components/ui/Segmented.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import TicketStub from '@/components/mot/TicketStub.vue'
+import { useTicketsStore } from '@/stores/tickets'
+import { useAuthStore } from '@/stores/auth'
+import { useTabReselect } from '@/composables/useTabReselect'
+import { relativeTime } from '@/lib/format'
 import type { Reservation } from '@/types'
 
-const router  = useRouter()
-const loading = ref(true)
-const tickets = ref<Reservation[]>([])
-const today   = new Date().toISOString().slice(0, 10)
+defineOptions({ name: 'TicketsView' })
 
-const upcoming = computed(() =>
-  tickets.value.filter((t: any) => t.statut === 'valide' && (t.trajet?.date_depart || '') >= today)
-)
-const past = computed(() =>
-  tickets.value.filter((t: any) => t.statut !== 'valide' || (t.trajet?.date_depart || '') < today)
-)
+const router = useRouter()
+const tickets = useTicketsStore()
+const auth = useAuthStore()
 
-function fmt(p: any) { return new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' }
+const ptr = ref<InstanceType<typeof PullToRefresh> | null>(null)
+useTabReselect('tickets', computed(() => ptr.value?.el))
 
-onMounted(async () => {
-  try {
-    const { data } = await reservationApi.index()
-    tickets.value = data.reservations || []
-  } finally {
-    loading.value = false
-  }
-})
+const tab = ref<'upcoming' | 'past'>('upcoming')
+const list = computed(() => (tab.value === 'upcoming' ? tickets.upcoming : tickets.past))
+const firstLoad = computed(() => tickets.loading && !tickets.list.length)
+
+function open(t: Reservation) {
+  router.push({ name: 'ticket', params: { reference: t.reference } })
+}
+
+function sync() {
+  if (!auth.isLoggedIn) return Promise.resolve()
+  return tickets.refresh()
+}
+
+onMounted(() => { tickets.hydrate(); sync() })
+onActivated(() => { if (!tickets.syncedAt || Date.now() - tickets.syncedAt > 60_000) sync() })
+watch(() => auth.isLoggedIn, v => { if (v) { tickets.clear(); tickets.hydrate(); sync() } else tickets.clear() })
 </script>
+
+<template>
+  <div class="view">
+    <header class="safe-top shrink-0 bg-surface px-5 pb-3 shadow-divider">
+      <h1 class="pt-4 font-display text-[36px] font-semibold leading-none">Mes billets</h1>
+      <Segmented
+        v-if="auth.isLoggedIn"
+        v-model="tab"
+        class="mt-4"
+        :options="[
+          { value: 'upcoming', label: 'À venir', count: tickets.upcoming.length },
+          { value: 'past', label: 'Passés' },
+        ]"
+      />
+    </header>
+
+    <!-- Invité -->
+    <div v-if="!auth.isLoggedIn" class="view-scroll tabbar-space">
+      <EmptyState
+        :icon="Ticket"
+        title="Vos billets, toujours sur vous"
+        text="Connectez-vous pour retrouver vos réservations. Elles restent consultables même sans connexion internet."
+      >
+        <button type="button" class="btn-primary" @click="router.push({ name: 'login', query: { redirect: '/billets' } })">Se connecter</button>
+        <button type="button" class="btn-ghost" @click="router.push({ name: 'register' })">Créer un compte</button>
+      </EmptyState>
+    </div>
+
+    <PullToRefresh v-else ref="ptr" class="tabbar-space" :on-refresh="sync">
+      <div
+        v-if="tickets.error === 'offline' && tickets.syncedAt"
+        class="mx-4 mt-4 flex items-center gap-2.5 rounded-2xl bg-surface px-4 py-3 text-[14px] text-asphalte shadow-outline"
+      >
+        <CloudOff class="h-[18px] w-[18px] shrink-0" />
+        Hors connexion. Billets mis à jour {{ relativeTime(tickets.syncedAt) }}.
+      </div>
+
+      <div v-if="firstLoad" class="space-y-3 px-4 pt-4">
+        <div v-for="i in 3" :key="i" class="skeleton h-[108px] rounded-[22px]" />
+      </div>
+
+      <EmptyState
+        v-else-if="tickets.error === 'failed'"
+        :icon="CloudOff"
+        tone="error"
+        title="Billets indisponibles"
+        text="Impossible de récupérer vos billets. Vérifiez votre connexion puis tirez l’écran vers le bas pour réessayer."
+      >
+        <button type="button" class="btn-primary" @click="sync">Réessayer</button>
+      </EmptyState>
+
+      <EmptyState
+        v-else-if="!list.length && tab === 'upcoming'"
+        :icon="TicketPlus"
+        title="Aucun voyage prévu"
+        text="Réservez votre prochain trajet : votre billet apparaîtra ici dès la confirmation."
+      >
+        <button type="button" class="btn-primary" @click="router.push('/')">Réserver un trajet</button>
+      </EmptyState>
+
+      <EmptyState
+        v-else-if="!list.length"
+        :icon="History"
+        title="Pas encore d’historique"
+        text="Vos voyages passés et billets annulés s’afficheront ici."
+      />
+
+      <div v-else class="space-y-3 px-4 pt-4">
+        <TicketStub v-for="t in list" :key="t.reference" :ticket="t" :past="tab === 'past'" @click="open(t)" />
+      </div>
+    </PullToRefresh>
+  </div>
+</template>
