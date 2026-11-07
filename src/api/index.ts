@@ -71,15 +71,21 @@ async function guard<T>(fn: () => Promise<{ data: T }>) {
   }
 }
 
+/** Messages techniques du backend à ne jamais montrer à un voyageur */
+const TECHNICAL = /No query results|SQLSTATE|Exception|Stack trace|App\\|Illuminate\\|Undefined|Call to|Server Error/i
+
 /** Message lisible depuis une erreur API (validation Laravel ou autre) */
 export function errorMessage(e: unknown, fallback = 'Une erreur est survenue. Réessayez.'): string {
   const err = e as AxiosError<{ message?: string; errors?: Record<string, string[]> }>
   if (!err?.response) {
     return navigator.onLine ? 'Le serveur ne répond pas. Réessayez dans un instant.' : 'Pas de connexion internet.'
   }
-  const data = err.response.data
+  const { status, data } = err.response
+  if (status >= 500) return 'Le service rencontre un problème. Réessayez dans un instant.'
+  if (status === 404) return fallback
   const first = data?.errors ? Object.values(data.errors)[0]?.[0] : undefined
-  return first || data?.message || fallback
+  const msg = first || data?.message
+  return msg && !TECHNICAL.test(msg) ? msg : fallback
 }
 
 export function fieldErrors(e: unknown): Record<string, string> {
