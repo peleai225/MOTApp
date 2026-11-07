@@ -1,5 +1,6 @@
-# Inutile pour le site web : projet Android natif et sources des visuels de l'app
-android/
-assets/
-docs/
-.superpowers/
+# Inutile pour le site web : projet Android natif et sources des visuels de l'app.
+# Le « / » initial limite chaque règle à la racine (sans lui, « assets/ » exclurait aussi src/assets).
+/android/
+/assets/
+/docs/
+/.superpowers/
